@@ -1,0 +1,23 @@
+name: event_tracker
+description: A simple Flutter app for tracking events
+version: 1.0.0+1
+
+environment:
+  sdk: '^3.8.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+  path_provider: ^2.0.15
+  fl_chart: ^0.63.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  hive_generator: ^2.0.1
+  build_runner: ^2.3.3
+
+flutter:
+  uses-material-design: true
