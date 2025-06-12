@@ -7,48 +7,112 @@ class DashboardScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final box = Hive.box<Entry>('entries');
-    final data = <String, int>{};
+    final entries = box.values.toList();
 
-    for (var entry in box.values) {
-      data.update(entry.gambit, (value) => value + entry.playerWounds,
-          ifAbsent: () => entry.playerWounds);
+    // --- Calculate Summary Stats ---
+    int totalWins = entries.where((e) => e.matchWin).length;
+    int totalLosses = entries.length - totalWins;
+
+    int focusWins = entries.where((e) => e.focusRollWin).length;
+    int focusLosses = entries.length - focusWins;
+
+    // Most Used Gambit
+    Map<String, int> gambitCounts = {};
+    for (var e in entries) {
+      gambitCounts[e.gambit] = (gambitCounts[e.gambit] ?? 0) + 1;
     }
+    String mostUsedGambit = gambitCounts.entries.isEmpty
+        ? 'N/A'
+        : gambitCounts.entries.reduce((a, b) => a.value >= b.value ? a : b).key;
 
-    final barGroups = data.entries
-        .map((e) => BarChartGroupData(
-              x: data.keys.toList().indexOf(e.key),
-              barRods: [BarChartRodData(toY: e.value.toDouble(), width: 16)],
-            ))
-        .toList();
-
-    return Padding(
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
-      child: BarChart(
-        BarChartData(
-          titlesData: FlTitlesData(
-            leftTitles: AxisTitles(
-              sideTitles: SideTitles(showTitles: true),
-            ),
-            bottomTitles: AxisTitles(
-              sideTitles: SideTitles(
-                showTitles: true,
-                getTitlesWidget: (value, meta) {
-                  final index = value.toInt();
-                  if (index >= 0 && index < data.keys.length) {
-                    return Text(
-                      data.keys.elementAt(index),
-                      style: TextStyle(color: Colors.white),
-                    );
-                  } else {
-                    return Text('');
-                  }
-                },
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Center(
+            child: Text(
+              'Win/Loss Record',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.teal,
               ),
             ),
           ),
-          barGroups: barGroups,
-          gridData: FlGridData(show: true),
-          borderData: FlBorderData(show: false),
+          SizedBox(height: 8),
+          SizedBox(
+            height: 200,
+            child: PieChart(
+              PieChartData(
+                sections: [
+                  PieChartSectionData(
+                    value: totalWins.toDouble(),
+                    title: entries.isEmpty
+                        ? '0%'
+                        : '${(totalWins / entries.length * 100).toStringAsFixed(1)}%',
+                    color: Colors.green,
+                    radius: 60,
+                    titleStyle: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  PieChartSectionData(
+                    value: totalLosses.toDouble(),
+                    title: entries.isEmpty
+                        ? '0%'
+                        : '${(totalLosses / entries.length * 100).toStringAsFixed(1)}%',
+                    color: Colors.red[900],
+                    radius: 60,
+                    titleStyle: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+                sectionsSpace: 2,
+                centerSpaceRadius: 40,
+              ),
+            ),
+          ),
+          SizedBox(height: 8),
+          Center(
+            child: Text(
+              '$totalWins Wins / $totalLosses Losses',
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.white,
+              ),
+            ),
+          ),
+          SizedBox(height: 24),
+          _buildStatCard('Focus Rolls', '$focusWins / $focusLosses', 'Wins / Losses'),
+          _buildStatCard('Most Used Gambit', mostUsedGambit),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatCard(String title, String stat, [String? subtitle]) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 16),
+      color: Colors.grey[850],
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(title, style: TextStyle(fontSize: 16, color: Colors.teal)),
+            SizedBox(height: 8),
+            Text(stat, style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+            if (subtitle != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(subtitle, style: TextStyle(color: Colors.grey)),
+              ),
+          ],
         ),
       ),
     );

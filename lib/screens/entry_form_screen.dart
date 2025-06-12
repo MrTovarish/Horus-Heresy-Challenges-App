@@ -20,7 +20,8 @@ class _EntryFormScreenState extends State<EntryFormScreen> {
   final _opponentWoundsController = TextEditingController();
 
   DateTime _selectedDate = DateTime.now();
-  String _selectedGambit = 'Seize the Initiative';
+  String _playerGambit = 'Seize the Initiative';
+  String _opponentGambit = 'Seize the Initiative';
   bool _focusRollWin = true;
   bool _matchWin = true;
 
@@ -33,16 +34,29 @@ class _EntryFormScreenState extends State<EntryFormScreen> {
         playerWounds: int.parse(_playerWoundsController.text),
         opponent: _opponentController.text,
         opponentWounds: int.parse(_opponentWoundsController.text),
-        gambit: _selectedGambit,
+        gambit: _playerGambit, // still only storing the player's gambit
         focusRollWin: _focusRollWin,
         matchWin: _matchWin,
+        opponentGambit: _opponentGambit,
       );
 
       final box = Hive.box<Entry>('entries');
       box.add(newEntry);
 
       widget.onEntrySaved();
-      Navigator.pop(context);
+
+      _gameController.clear();
+      _characterController.clear();
+      _opponentController.clear();
+      _playerWoundsController.clear();
+      _opponentWoundsController.clear();
+      _selectedDate = DateTime.now();
+      _playerGambit = 'Seize the Initiative';
+      _opponentGambit = 'Seize the Initiative';
+      _focusRollWin = true;
+      _matchWin = true;
+
+      setState(() {});
     }
   }
 
@@ -62,10 +76,17 @@ class _EntryFormScreenState extends State<EntryFormScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final gambitOptions = [
+      'Seize the Initiative',
+      'Flurry of Blows',
+      'Feint and Riposte',
+      'Finishing Blow'
+    ];
+
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
-        title: Text('New Entry'),
+        title: Text('New Record'),
         backgroundColor: Colors.grey[900],
       ),
       body: Padding(
@@ -78,69 +99,113 @@ class _EntryFormScreenState extends State<EntryFormScreen> {
               children: [
                 TextFormField(
                   controller: _gameController,
-                  decoration: InputDecoration(labelText: 'Game'),
+                  decoration: InputDecoration(labelText: 'Title'),
                   style: TextStyle(color: Colors.white),
-                  validator: (value) => value!.isEmpty ? 'Enter a game name' : null,
+                  validator: (value) => value!.isEmpty ? 'Enter a title' : null,
                 ),
                 SizedBox(height: 10),
                 ListTile(
-                  title: Text("Date: ${_selectedDate.toLocal().toString().split(' ')[0]}", style: TextStyle(color: Colors.white)),
+                  title: Text(
+                    "Date: ${_selectedDate.toLocal().toString().split(' ')[0]}",
+                    style: TextStyle(color: Colors.white),
+                  ),
                   trailing: Icon(Icons.calendar_today, color: Colors.white),
                   onTap: _pickDate,
                 ),
                 TextFormField(
                   controller: _characterController,
-                  decoration: InputDecoration(labelText: 'Character'),
+                  decoration: InputDecoration(labelText: 'Your Character'),
                   style: TextStyle(color: Colors.white),
-                  validator: (value) => value!.isEmpty ? 'Enter a character name' : null,
+                  validator: (value) => value!.isEmpty ? 'Enter your character' : null,
                 ),
                 TextFormField(
                   controller: _playerWoundsController,
                   keyboardType: TextInputType.number,
-                  decoration: InputDecoration(labelText: '# of Wounds'),
+                  decoration: InputDecoration(labelText: 'Your # of Starting Wounds'),
                   style: TextStyle(color: Colors.white),
-                  validator: (value) => value!.isEmpty ? 'Enter # of wounds' : null,
+                  validator: (value) => value!.isEmpty ? 'Enter your wounds' : null,
                 ),
                 TextFormField(
                   controller: _opponentController,
-                  decoration: InputDecoration(labelText: 'vs Who'),
+                  decoration: InputDecoration(labelText: 'Enemy Character'),
                   style: TextStyle(color: Colors.white),
-                  validator: (value) => value!.isEmpty ? 'Enter opponent name' : null,
+                  validator: (value) => value!.isEmpty ? 'Enter enemy character' : null,
                 ),
                 TextFormField(
                   controller: _opponentWoundsController,
                   keyboardType: TextInputType.number,
-                  decoration: InputDecoration(labelText: '# of Wounds (Opponent)'),
+                  decoration: InputDecoration(labelText: "Enemy's # of Starting Wounds"),
                   style: TextStyle(color: Colors.white),
-                  validator: (value) => value!.isEmpty ? 'Enter opponent wounds' : null,
+                  validator: (value) => value!.isEmpty ? 'Enter enemy wounds' : null,
                 ),
+
+                // GAMBIT SECTION
+                SizedBox(height: 20),
                 DropdownButtonFormField<String>(
-                  value: _selectedGambit,
-                  items: [
-                    'Seize the Initiative',
-                    'Flurry of Blows',
-                    'Feint and Riposte',
-                    'Finishing Blow'
-                  ].map((g) => DropdownMenuItem(value: g, child: Text(g))).toList(),
-                  onChanged: (value) => setState(() => _selectedGambit = value!),
-                  decoration: InputDecoration(labelText: 'Gambit'),
+                  value: _playerGambit,
+                  items: gambitOptions
+                      .map((g) => DropdownMenuItem(value: g, child: Text(g)))
+                      .toList(),
+                  onChanged: (value) => setState(() => _playerGambit = value!),
+                  decoration: InputDecoration(labelText: 'Your Gambit'),
                   dropdownColor: Colors.grey[900],
                   style: TextStyle(color: Colors.white),
                 ),
-                SwitchListTile(
-                  title: Text('Focus Roll Win?', style: TextStyle(color: Colors.white)),
-                  value: _focusRollWin,
-                  onChanged: (val) => setState(() => _focusRollWin = val),
+                DropdownButtonFormField<String>(
+                  value: _opponentGambit,
+                  items: gambitOptions
+                      .map((g) => DropdownMenuItem(value: g, child: Text(g)))
+                      .toList(),
+                  onChanged: (value) => setState(() => _opponentGambit = value!),
+                  decoration: InputDecoration(labelText: 'Enemy Gambit'),
+                  dropdownColor: Colors.grey[900],
+                  style: TextStyle(color: Colors.white),
                 ),
-                SwitchListTile(
-                  title: Text('Match Win?', style: TextStyle(color: Colors.white)),
-                  value: _matchWin,
-                  onChanged: (val) => setState(() => _matchWin = val),
+
+                SizedBox(height: 20),
+                Text('Focus Roll', style: TextStyle(color: Colors.white, fontSize: 16)),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    _buildColoredButton(
+                      label: 'Won',
+                      selected: _focusRollWin == true,
+                      selectedColor: Colors.green,
+                      onTap: () => setState(() => _focusRollWin = true),
+                    ),
+                    _buildColoredButton(
+                      label: 'Lost',
+                      selected: _focusRollWin == false,
+                      selectedColor: Colors.red[900]!,
+                      onTap: () => setState(() => _focusRollWin = false),
+                    ),
+                  ],
                 ),
                 SizedBox(height: 20),
-                ElevatedButton(
-                  onPressed: _submitForm,
-                  child: Text('Save Entry'),
+                Text('Victory or Death', style: TextStyle(color: Colors.white, fontSize: 16)),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    _buildColoredButton(
+                      label: 'Victory',
+                      selected: _matchWin == true,
+                      selectedColor: Colors.green,
+                      onTap: () => setState(() => _matchWin = true),
+                    ),
+                    _buildColoredButton(
+                      label: 'Death',
+                      selected: _matchWin == false,
+                      selectedColor: Colors.red[900]!,
+                      onTap: () => setState(() => _matchWin = false),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 30),
+                Center(
+                  child: ElevatedButton(
+                    onPressed: _submitForm,
+                    child: Text('Save Record'),
+                  ),
                 ),
               ],
             ),
@@ -149,4 +214,28 @@ class _EntryFormScreenState extends State<EntryFormScreen> {
       ),
     );
   }
+
+  Widget _buildColoredButton({
+    required String label,
+    required bool selected,
+    required Color selectedColor,
+    required VoidCallback onTap,
+  }) {
+    return ElevatedButton(
+      onPressed: onTap,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: selected ? selectedColor : Colors.grey[700],
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: selected ? Colors.black : Colors.white,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
 }
+
+
+

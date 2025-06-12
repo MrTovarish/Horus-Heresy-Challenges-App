@@ -31,6 +31,9 @@ class Entry extends HiveObject {
   @HiveField(8)
   late bool matchWin;
 
+  @HiveField(9)
+  late String opponentGambit;
+
   Entry({
     required this.game,
     required this.date,
@@ -41,5 +44,6 @@ class Entry extends HiveObject {
     required this.gambit,
     required this.focusRollWin,
     required this.matchWin,
+    required this.opponentGambit,
   });
 }

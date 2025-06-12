@@ -26,13 +26,14 @@ class EntryAdapter extends TypeAdapter<Entry> {
       gambit: fields[6] as String,
       focusRollWin: fields[7] as bool,
       matchWin: fields[8] as bool,
+      opponentGambit: fields[9] as String,
     );
   }
 
   @override
   void write(BinaryWriter writer, Entry obj) {
     writer
-      ..writeByte(9)
+      ..writeByte(10)
       ..writeByte(0)
       ..write(obj.game)
       ..writeByte(1)
@@ -50,7 +51,9 @@ class EntryAdapter extends TypeAdapter<Entry> {
       ..writeByte(7)
       ..write(obj.focusRollWin)
       ..writeByte(8)
-      ..write(obj.matchWin);
+      ..write(obj.matchWin)
+      ..writeByte(9)
+      ..write(obj.opponentGambit);
   }
 
   @override
