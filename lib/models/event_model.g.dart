@@ -22,15 +22,14 @@ class EventAdapter extends TypeAdapter<Event> {
       yourCharacter: fields[2] as String,
       enemyCharacter: fields[3] as String,
       turns: (fields[4] as List).cast<Turn>(),
-      focusRollWin: fields[5] as bool,
-      matchWin: fields[6] as bool,
+      matchWin: fields[5] as bool,
     );
   }
 
   @override
   void write(BinaryWriter writer, Event obj) {
     writer
-      ..writeByte(7)
+      ..writeByte(6)
       ..writeByte(0)
       ..write(obj.title)
       ..writeByte(1)
@@ -42,8 +41,6 @@ class EventAdapter extends TypeAdapter<Event> {
       ..writeByte(4)
       ..write(obj.turns)
       ..writeByte(5)
-      ..write(obj.focusRollWin)
-      ..writeByte(6)
       ..write(obj.matchWin);
   }
 

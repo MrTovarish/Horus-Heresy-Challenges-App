@@ -8,6 +8,8 @@ class EventDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final lastIndex = event.turns.length - 1;
+
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
@@ -27,6 +29,8 @@ class EventDetailScreen extends StatelessWidget {
             ...event.turns.asMap().entries.map((entry) {
               final index = entry.key;
               final turn = entry.value;
+              final isFinal = index == lastIndex;
+
               return Card(
                 color: Colors.grey[850],
                 margin: const EdgeInsets.symmetric(vertical: 8),
@@ -35,14 +39,18 @@ class EventDetailScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Turn ${index + 1}', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.teal)),
+                      Text(
+                        isFinal ? 'Turn ${index + 1} - Final Turn' : 'Turn ${index + 1}',
+                        style: TextStyle(fontWeight: FontWeight.bold, color: Colors.teal),
+                      ),
                       SizedBox(height: 4),
                       Text('Your Wounds: ${turn.playerWounds}', style: _infoStyle()),
                       Text('Enemy Wounds: ${turn.opponentWounds}', style: _infoStyle()),
                       Text('Your Gambit: ${turn.playerGambit}', style: _infoStyle()),
                       Text('Enemy Gambit: ${turn.opponentGambit}', style: _infoStyle()),
-                      Text('Focus Roll: ${event.focusRollWin ? 'Won' : 'Lost'}', style: _infoStyle()),
-                      Text('Result: ${event.matchWin ? 'Victory' : 'Death'}', style: _infoStyle()),
+                      Text('Focus Roll: ${turn.focusRollWin ? 'Won' : 'Lost'}', style: _infoStyle()),
+                      if (isFinal)
+                        Text('Result: ${event.matchWin ? 'Victory' : 'Death'}', style: _infoStyle()),
                     ],
                   ),
                 ),

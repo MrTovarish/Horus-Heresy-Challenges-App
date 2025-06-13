@@ -21,13 +21,14 @@ class TurnAdapter extends TypeAdapter<Turn> {
       opponentWounds: fields[1] as int,
       playerGambit: fields[2] as String,
       opponentGambit: fields[3] as String,
+      focusRollWin: fields[4] as bool,
     );
   }
 
   @override
   void write(BinaryWriter writer, Turn obj) {
     writer
-      ..writeByte(4)
+      ..writeByte(5)
       ..writeByte(0)
       ..write(obj.playerWounds)
       ..writeByte(1)
@@ -35,7 +36,9 @@ class TurnAdapter extends TypeAdapter<Turn> {
       ..writeByte(2)
       ..write(obj.playerGambit)
       ..writeByte(3)
-      ..write(obj.opponentGambit);
+      ..write(obj.opponentGambit)
+      ..writeByte(4)
+      ..write(obj.focusRollWin);
   }
 
   @override

@@ -16,10 +16,15 @@ class Turn extends HiveObject {
   @HiveField(3)
   late String opponentGambit;
 
+  @HiveField(4)
+  late bool focusRollWin;
+
+
   Turn({
     required this.playerWounds,
     required this.opponentWounds,
     required this.playerGambit,
     required this.opponentGambit,
+    required this.focusRollWin,
   });
 }

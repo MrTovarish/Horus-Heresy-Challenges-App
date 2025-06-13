@@ -35,6 +35,7 @@ class _EntryFormScreenState extends State<EntryFormScreen> {
         opponentWounds: int.parse(_opponentWoundsController.text),
         playerGambit: _playerGambit,
         opponentGambit: _opponentGambit,
+        focusRollWin: _focusRollWin,
       );
 
       setState(() {
@@ -50,57 +51,50 @@ class _EntryFormScreenState extends State<EntryFormScreen> {
   }
 
   void _saveEvent() {
-    if (_formKey.currentState!.validate()) {
-      final hasWounds = _playerWoundsController.text.isNotEmpty && _opponentWoundsController.text.isNotEmpty;
-
-      if (_turns.isEmpty && hasWounds) {
-        final firstTurn = Turn(
-          playerWounds: int.parse(_playerWoundsController.text),
-          opponentWounds: int.parse(_opponentWoundsController.text),
-          playerGambit: _playerGambit,
-          opponentGambit: _opponentGambit,
-        );
-        _turns.add(firstTurn);
-      }
-
-      if (_turns.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Add at least 1 turn before saving the event')),
-        );
-        return;
-      }
-
-      final event = Event(
-        title: _gameController.text,
-        date: _selectedDate,
-        yourCharacter: _characterController.text,
-        enemyCharacter: _opponentController.text,
-        turns: List.from(_turns),
-        focusRollWin: _focusRollWin,
-        matchWin: _matchWin,
+  if (_formKey.currentState!.validate()) {
+    final hasWounds = _playerWoundsController.text.isNotEmpty && _opponentWoundsController.text.isNotEmpty;
+    
+    if (hasWounds) {
+      final firstTurn = Turn(
+        playerWounds: int.parse(_playerWoundsController.text),
+        opponentWounds: int.parse(_opponentWoundsController.text),
+        playerGambit: _playerGambit,
+        opponentGambit: _opponentGambit,
+        focusRollWin: _focusRollWin,    
       );
-
-      final box = Hive.box<Event>('events');
-      box.add(event);
-
-      widget.onEntrySaved();
-
-      _gameController.clear();
-      _characterController.clear();
-      _opponentController.clear();
-      _playerWoundsController.clear();
-      _opponentWoundsController.clear();
-      _selectedDate = DateTime.now();
-      _playerGambit = 'Seize the Initiative';
-      _opponentGambit = 'Seize the Initiative';
-      _focusRollWin = true;
-      _matchWin = true;
-      _turns.clear();
-
-      setState(() {});
+      _turns.add(firstTurn);
     }
-  }
 
+
+    final event = Event(
+      title: _gameController.text,
+      date: _selectedDate,
+      yourCharacter: _characterController.text,
+      enemyCharacter: _opponentController.text,
+      turns: List.from(_turns),
+      matchWin: _matchWin,
+    );
+
+    final box = Hive.box<Event>('events');
+    box.add(event);
+
+    widget.onEntrySaved();
+
+    _gameController.clear();
+    _characterController.clear();
+    _opponentController.clear();
+    _playerWoundsController.clear();
+    _opponentWoundsController.clear();
+    _selectedDate = DateTime.now();
+    _playerGambit = 'Seize the Initiative';
+    _opponentGambit = 'Seize the Initiative';
+    _focusRollWin = true;
+    _matchWin = true;
+    _turns.clear();
+
+    setState(() {});
+  }
+}
   Future<void> _pickDate() async {
     final picked = await showDatePicker(
       context: context,

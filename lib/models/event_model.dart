@@ -19,11 +19,8 @@ class Event extends HiveObject {
 
   @HiveField(4)
   late List<Turn> turns;
-  
-  @HiveField(5)
-  late bool focusRollWin;
 
-  @HiveField(6)
+  @HiveField(5)
   late bool matchWin;
 
   Event({
@@ -32,7 +29,6 @@ class Event extends HiveObject {
   required this.yourCharacter,
   required this.enemyCharacter,
   required this.turns,
-  required this.focusRollWin,
   required this.matchWin,
   });
 }

@@ -23,22 +23,24 @@ class DashboardScreen extends StatelessWidget {
         // Total wins/losses
         if (event.matchWin) {
           totalWins++;
-          winningGambits[turn.playerGambit] = (winningGambits[turn.playerGambit] ?? 0) + 1;
+          winningGambits[turn.playerGambit] =
+              (winningGambits[turn.playerGambit] ?? 0) + 1;
           winningCharacters[event.yourCharacter] =
               (winningCharacters[event.yourCharacter] ?? 0) + 1;
         } else {
           totalLosses++;
         }
 
-        // Focus roll stats
-        if (event.focusRollWin) {
+        // Focus roll stats (moved back to Turn)
+        if (turn.focusRollWin) {
           focusWins++;
         } else {
           focusLosses++;
         }
 
         // Total gambit usage
-        gambitUsage[turn.playerGambit] = (gambitUsage[turn.playerGambit] ?? 0) + 1;
+        gambitUsage[turn.playerGambit] =
+            (gambitUsage[turn.playerGambit] ?? 0) + 1;
       }
     }
 
@@ -48,11 +50,15 @@ class DashboardScreen extends StatelessWidget {
 
     String mostEffectiveGambit = winningGambits.isEmpty
         ? 'N/A'
-        : winningGambits.entries.reduce((a, b) => a.value >= b.value ? a : b).key;
+        : winningGambits.entries
+            .reduce((a, b) => a.value >= b.value ? a : b)
+            .key;
 
     String mostVictoriousCharacter = winningCharacters.isEmpty
         ? 'N/A'
-        : winningCharacters.entries.reduce((a, b) => a.value >= b.value ? a : b).key;
+        : winningCharacters.entries
+            .reduce((a, b) => a.value >= b.value ? a : b)
+            .key;
 
     final totalTurns = totalWins + totalLosses;
 
