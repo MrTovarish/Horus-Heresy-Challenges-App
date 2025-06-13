@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
-import '../models/entry_model.dart';
+import '../models/event_model.dart';
+import '../models/turn_model.dart';
 
 class EntryFormScreen extends StatefulWidget {
   final VoidCallback onEntrySaved;
@@ -25,23 +26,62 @@ class _EntryFormScreenState extends State<EntryFormScreen> {
   bool _focusRollWin = true;
   bool _matchWin = true;
 
-  void _submitForm() {
+  final List<Turn> _turns = [];
+
+  void _addTurn() {
     if (_formKey.currentState!.validate()) {
-      final newEntry = Entry(
-        game: _gameController.text,
-        date: _selectedDate,
-        character: _characterController.text,
+      final turn = Turn(
         playerWounds: int.parse(_playerWoundsController.text),
-        opponent: _opponentController.text,
         opponentWounds: int.parse(_opponentWoundsController.text),
-        gambit: _playerGambit, // still only storing the player's gambit
-        focusRollWin: _focusRollWin,
-        matchWin: _matchWin,
+        playerGambit: _playerGambit,
         opponentGambit: _opponentGambit,
       );
 
-      final box = Hive.box<Entry>('entries');
-      box.add(newEntry);
+      setState(() {
+        _turns.add(turn);
+        _playerWoundsController.clear();
+        _opponentWoundsController.clear();
+        _playerGambit = 'Seize the Initiative';
+        _opponentGambit = 'Seize the Initiative';
+        _focusRollWin = true;
+        _matchWin = true;
+      });
+    }
+  }
+
+  void _saveEvent() {
+    if (_formKey.currentState!.validate()) {
+      final hasWounds = _playerWoundsController.text.isNotEmpty && _opponentWoundsController.text.isNotEmpty;
+
+      if (_turns.isEmpty && hasWounds) {
+        final firstTurn = Turn(
+          playerWounds: int.parse(_playerWoundsController.text),
+          opponentWounds: int.parse(_opponentWoundsController.text),
+          playerGambit: _playerGambit,
+          opponentGambit: _opponentGambit,
+        );
+        _turns.add(firstTurn);
+      }
+
+      if (_turns.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Add at least 1 turn before saving the event')),
+        );
+        return;
+      }
+
+      final event = Event(
+        title: _gameController.text,
+        date: _selectedDate,
+        yourCharacter: _characterController.text,
+        enemyCharacter: _opponentController.text,
+        turns: List.from(_turns),
+        focusRollWin: _focusRollWin,
+        matchWin: _matchWin,
+      );
+
+      final box = Hive.box<Event>('events');
+      box.add(event);
 
       widget.onEntrySaved();
 
@@ -55,22 +95,21 @@ class _EntryFormScreenState extends State<EntryFormScreen> {
       _opponentGambit = 'Seize the Initiative';
       _focusRollWin = true;
       _matchWin = true;
+      _turns.clear();
 
       setState(() {});
     }
   }
 
   Future<void> _pickDate() async {
-    final DateTime? picked = await showDatePicker(
+    final picked = await showDatePicker(
       context: context,
       initialDate: _selectedDate,
       firstDate: DateTime(2020),
       lastDate: DateTime(2100),
     );
     if (picked != null && picked != _selectedDate) {
-      setState(() {
-        _selectedDate = picked;
-      });
+      setState(() => _selectedDate = picked);
     }
   }
 
@@ -116,37 +155,47 @@ class _EntryFormScreenState extends State<EntryFormScreen> {
                   controller: _characterController,
                   decoration: InputDecoration(labelText: 'Your Character'),
                   style: TextStyle(color: Colors.white),
-                  validator: (value) => value!.isEmpty ? 'Enter your character' : null,
-                ),
-                TextFormField(
-                  controller: _playerWoundsController,
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(labelText: 'Your # of Starting Wounds'),
-                  style: TextStyle(color: Colors.white),
-                  validator: (value) => value!.isEmpty ? 'Enter your wounds' : null,
+                  validator: (value) =>
+                      value!.isEmpty ? 'Enter your character' : null,
                 ),
                 TextFormField(
                   controller: _opponentController,
                   decoration: InputDecoration(labelText: 'Enemy Character'),
                   style: TextStyle(color: Colors.white),
-                  validator: (value) => value!.isEmpty ? 'Enter enemy character' : null,
+                  validator: (value) =>
+                      value!.isEmpty ? 'Enter enemy character' : null,
+                ),
+                SizedBox(height: 20),
+                Text(
+                  '--- Turn ${_turns.length + 1} ---',
+                  style: TextStyle(color: Colors.teal, fontSize: 16),
+                ),
+                TextFormField(
+                  controller: _playerWoundsController,
+                  keyboardType: TextInputType.number,
+                  decoration:
+                      InputDecoration(labelText: 'Your # of Starting Wounds'),
+                  style: TextStyle(color: Colors.white),
+                  validator: (value) =>
+                      value!.isEmpty ? 'Enter your wounds' : null,
                 ),
                 TextFormField(
                   controller: _opponentWoundsController,
                   keyboardType: TextInputType.number,
-                  decoration: InputDecoration(labelText: "Enemy's # of Starting Wounds"),
+                  decoration:
+                      InputDecoration(labelText: "Enemy's # of Starting Wounds"),
                   style: TextStyle(color: Colors.white),
-                  validator: (value) => value!.isEmpty ? 'Enter enemy wounds' : null,
+                  validator: (value) =>
+                      value!.isEmpty ? 'Enter enemy wounds' : null,
                 ),
-
-                // GAMBIT SECTION
                 SizedBox(height: 20),
                 DropdownButtonFormField<String>(
                   value: _playerGambit,
                   items: gambitOptions
                       .map((g) => DropdownMenuItem(value: g, child: Text(g)))
                       .toList(),
-                  onChanged: (value) => setState(() => _playerGambit = value!),
+                  onChanged: (value) =>
+                      setState(() => _playerGambit = value!),
                   decoration: InputDecoration(labelText: 'Your Gambit'),
                   dropdownColor: Colors.grey[900],
                   style: TextStyle(color: Colors.white),
@@ -156,14 +205,15 @@ class _EntryFormScreenState extends State<EntryFormScreen> {
                   items: gambitOptions
                       .map((g) => DropdownMenuItem(value: g, child: Text(g)))
                       .toList(),
-                  onChanged: (value) => setState(() => _opponentGambit = value!),
+                  onChanged: (value) =>
+                      setState(() => _opponentGambit = value!),
                   decoration: InputDecoration(labelText: 'Enemy Gambit'),
                   dropdownColor: Colors.grey[900],
                   style: TextStyle(color: Colors.white),
                 ),
-
                 SizedBox(height: 20),
-                Text('Focus Roll', style: TextStyle(color: Colors.white, fontSize: 16)),
+                Text('Focus Roll',
+                    style: TextStyle(color: Colors.white, fontSize: 16)),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
@@ -182,7 +232,8 @@ class _EntryFormScreenState extends State<EntryFormScreen> {
                   ],
                 ),
                 SizedBox(height: 20),
-                Text('Victory or Death', style: TextStyle(color: Colors.white, fontSize: 16)),
+                Text('Victory or Death',
+                    style: TextStyle(color: Colors.white, fontSize: 16)),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
@@ -201,11 +252,18 @@ class _EntryFormScreenState extends State<EntryFormScreen> {
                   ],
                 ),
                 SizedBox(height: 30),
-                Center(
-                  child: ElevatedButton(
-                    onPressed: _submitForm,
-                    child: Text('Save Record'),
-                  ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    ElevatedButton(
+                      onPressed: _addTurn,
+                      child: Text('New Turn'),
+                    ),
+                    ElevatedButton(
+                      onPressed: _saveEvent,
+                      child: Text('Save Event'),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -236,6 +294,7 @@ class _EntryFormScreenState extends State<EntryFormScreen> {
     );
   }
 }
+
 
 
 

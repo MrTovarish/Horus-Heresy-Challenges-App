@@ -5,6 +5,8 @@ import 'models/entry_model.dart';
 import 'screens/entry_form_screen.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/list_screen.dart';
+import 'models/turn_model.dart';
+import 'models/event_model.dart';
 
 const int currentDataVersion = 2;
 
@@ -14,6 +16,10 @@ void main() async {
   final appDir = await getApplicationDocumentsDirectory();
   Hive.init(appDir.path);
   Hive.registerAdapter(EntryAdapter());
+  Hive.registerAdapter(TurnAdapter());
+  Hive.registerAdapter(EventAdapter());
+  await Hive.openBox<Event>('events');
+
 
   final settingsBox = await Hive.openBox('settings');
   final entriesBox = await Hive.openBox<Entry>('entries');

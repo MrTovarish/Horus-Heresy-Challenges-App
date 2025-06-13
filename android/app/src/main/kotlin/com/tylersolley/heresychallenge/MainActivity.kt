@@ -1,4 +1,4 @@
-package com.example.event_tracker
+package com.tylersolley.heresychallenge
 
 import io.flutter.embedding.android.FlutterActivity
 

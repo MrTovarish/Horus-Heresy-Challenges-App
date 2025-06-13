@@ -1,29 +1,60 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:hive/hive.dart';
-import '../models/entry_model.dart';
+import '../models/event_model.dart';
 
 class DashboardScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    final box = Hive.box<Entry>('entries');
-    final entries = box.values.toList();
+    final box = Hive.box<Event>('events');
+    final events = box.values.toList();
 
-    // --- Calculate Summary Stats ---
-    int totalWins = entries.where((e) => e.matchWin).length;
-    int totalLosses = entries.length - totalWins;
+    int totalWins = 0;
+    int totalLosses = 0;
+    int focusWins = 0;
+    int focusLosses = 0;
 
-    int focusWins = entries.where((e) => e.focusRollWin).length;
-    int focusLosses = entries.length - focusWins;
+    final gambitUsage = <String, int>{};
+    final winningGambits = <String, int>{};
+    final winningCharacters = <String, int>{};
 
-    // Most Used Gambit
-    Map<String, int> gambitCounts = {};
-    for (var e in entries) {
-      gambitCounts[e.gambit] = (gambitCounts[e.gambit] ?? 0) + 1;
+    for (var event in events) {
+      for (var turn in event.turns) {
+        // Total wins/losses
+        if (event.matchWin) {
+          totalWins++;
+          winningGambits[turn.playerGambit] = (winningGambits[turn.playerGambit] ?? 0) + 1;
+          winningCharacters[event.yourCharacter] =
+              (winningCharacters[event.yourCharacter] ?? 0) + 1;
+        } else {
+          totalLosses++;
+        }
+
+        // Focus roll stats
+        if (event.focusRollWin) {
+          focusWins++;
+        } else {
+          focusLosses++;
+        }
+
+        // Total gambit usage
+        gambitUsage[turn.playerGambit] = (gambitUsage[turn.playerGambit] ?? 0) + 1;
+      }
     }
-    String mostUsedGambit = gambitCounts.entries.isEmpty
+
+    String mostUsedGambit = gambitUsage.isEmpty
         ? 'N/A'
-        : gambitCounts.entries.reduce((a, b) => a.value >= b.value ? a : b).key;
+        : gambitUsage.entries.reduce((a, b) => a.value >= b.value ? a : b).key;
+
+    String mostEffectiveGambit = winningGambits.isEmpty
+        ? 'N/A'
+        : winningGambits.entries.reduce((a, b) => a.value >= b.value ? a : b).key;
+
+    String mostVictoriousCharacter = winningCharacters.isEmpty
+        ? 'N/A'
+        : winningCharacters.entries.reduce((a, b) => a.value >= b.value ? a : b).key;
+
+    final totalTurns = totalWins + totalLosses;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
@@ -48,9 +79,9 @@ class DashboardScreen extends StatelessWidget {
                 sections: [
                   PieChartSectionData(
                     value: totalWins.toDouble(),
-                    title: entries.isEmpty
+                    title: totalTurns == 0
                         ? '0%'
-                        : '${(totalWins / entries.length * 100).toStringAsFixed(1)}%',
+                        : '${(totalWins / totalTurns * 100).toStringAsFixed(1)}%',
                     color: Colors.green,
                     radius: 60,
                     titleStyle: TextStyle(
@@ -60,9 +91,9 @@ class DashboardScreen extends StatelessWidget {
                   ),
                   PieChartSectionData(
                     value: totalLosses.toDouble(),
-                    title: entries.isEmpty
+                    title: totalTurns == 0
                         ? '0%'
-                        : '${(totalLosses / entries.length * 100).toStringAsFixed(1)}%',
+                        : '${(totalLosses / totalTurns * 100).toStringAsFixed(1)}%',
                     color: Colors.red[900],
                     radius: 60,
                     titleStyle: TextStyle(
@@ -89,6 +120,8 @@ class DashboardScreen extends StatelessWidget {
           SizedBox(height: 24),
           _buildStatCard('Focus Rolls', '$focusWins / $focusLosses', 'Wins / Losses'),
           _buildStatCard('Most Used Gambit', mostUsedGambit),
+          _buildStatCard('Most Effective Gambit', mostEffectiveGambit),
+          _buildStatCard('Most Victorious Character', mostVictoriousCharacter),
         ],
       ),
     );
@@ -118,3 +151,4 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 }
+
