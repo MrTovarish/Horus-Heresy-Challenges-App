@@ -7,6 +7,7 @@ import 'screens/dashboard_screen.dart';
 import 'screens/list_screen.dart';
 import 'models/turn_model.dart';
 import 'models/event_model.dart';
+import 'models/duel_model.dart';
 
 const int currentDataVersion = 2;
 
@@ -17,7 +18,9 @@ void main() async {
   Hive.init(appDir.path);
   Hive.registerAdapter(EntryAdapter());
   Hive.registerAdapter(TurnAdapter());
+  Hive.registerAdapter(DuelAdapter());
   Hive.registerAdapter(EventAdapter());
+  Hive.registerAdapter(MatchResultAdapter());
   await Hive.openBox<Event>('events');
 
 

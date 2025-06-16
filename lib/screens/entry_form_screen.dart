@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import '../models/event_model.dart';
 import '../models/turn_model.dart';
+import '../models/duel_model.dart';
 
 class EntryFormScreen extends StatefulWidget {
   final VoidCallback onEntrySaved;
@@ -14,87 +15,23 @@ class EntryFormScreen extends StatefulWidget {
 
 class _EntryFormScreenState extends State<EntryFormScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _gameController = TextEditingController();
-  final _characterController = TextEditingController();
-  final _opponentController = TextEditingController();
-  final _playerWoundsController = TextEditingController();
-  final _opponentWoundsController = TextEditingController();
-
   DateTime _selectedDate = DateTime.now();
-  String _playerGambit = 'Seize the Initiative';
-  String _opponentGambit = 'Seize the Initiative';
-  bool _focusRollWin = true;
-  bool _matchWin = true;
+  int _turnNumber = 1;
+  final List<_DuelFormData> _duels = [ _DuelFormData() ];
 
-  final List<Turn> _turns = [];
-
-  void _addTurn() {
-    if (_formKey.currentState!.validate()) {
-      final turn = Turn(
-        playerWounds: int.parse(_playerWoundsController.text),
-        opponentWounds: int.parse(_opponentWoundsController.text),
-        playerGambit: _playerGambit,
-        opponentGambit: _opponentGambit,
-        focusRollWin: _focusRollWin,
-      );
-
-      setState(() {
-        _turns.add(turn);
-        _playerWoundsController.clear();
-        _opponentWoundsController.clear();
-        _playerGambit = 'Seize the Initiative';
-        _opponentGambit = 'Seize the Initiative';
-        _focusRollWin = true;
-        _matchWin = true;
-      });
-    }
+  void _addDuel() {
+    setState(() => _duels.add(_DuelFormData()));
   }
 
-  void _saveEvent() {
-  if (_formKey.currentState!.validate()) {
-    final hasWounds = _playerWoundsController.text.isNotEmpty && _opponentWoundsController.text.isNotEmpty;
-    
-    if (hasWounds) {
-      final firstTurn = Turn(
-        playerWounds: int.parse(_playerWoundsController.text),
-        opponentWounds: int.parse(_opponentWoundsController.text),
-        playerGambit: _playerGambit,
-        opponentGambit: _opponentGambit,
-        focusRollWin: _focusRollWin,    
-      );
-      _turns.add(firstTurn);
-    }
-
-
-    final event = Event(
-      title: _gameController.text,
-      date: _selectedDate,
-      yourCharacter: _characterController.text,
-      enemyCharacter: _opponentController.text,
-      turns: List.from(_turns),
-      matchWin: _matchWin,
-    );
-
-    final box = Hive.box<Event>('events');
-    box.add(event);
-
-    widget.onEntrySaved();
-
-    _gameController.clear();
-    _characterController.clear();
-    _opponentController.clear();
-    _playerWoundsController.clear();
-    _opponentWoundsController.clear();
-    _selectedDate = DateTime.now();
-    _playerGambit = 'Seize the Initiative';
-    _opponentGambit = 'Seize the Initiative';
-    _focusRollWin = true;
-    _matchWin = true;
-    _turns.clear();
-
-    setState(() {});
+  void _addTurnToAllDuels() {
+    setState(() {
+      for (var duel in _duels) {
+        duel.turns.add(_TurnInputs());
+      }
+      _turnNumber++;
+    });
   }
-}
+
   Future<void> _pickDate() async {
     final picked = await showDatePicker(
       context: context,
@@ -102,8 +39,49 @@ class _EntryFormScreenState extends State<EntryFormScreen> {
       firstDate: DateTime(2020),
       lastDate: DateTime(2100),
     );
-    if (picked != null && picked != _selectedDate) {
+    if (picked != null) {
       setState(() => _selectedDate = picked);
+    }
+  }
+
+  void _saveEvent() {
+    if (_formKey.currentState!.validate()) {
+      final duels = _duels.map((duel) {
+        final turns = duel.turns.map((turn) {
+          return Turn(
+            playerWounds: int.parse(turn.playerWoundsController.text),
+            opponentWounds: int.parse(turn.opponentWoundsController.text),
+            playerGambit: turn.playerGambit,
+            opponentGambit: turn.opponentGambit,
+            focusRollWin: turn.focusRollWin,
+          );
+        }).toList();
+
+        return Duel(
+          title: duel.titleController.text,
+          yourCharacter: duel.yourCharacterController.text,
+          enemyCharacter: duel.enemyCharacterController.text,
+          turns: turns,
+          result: duel.result,
+        );
+      }).toList();
+
+      final event = Event(
+        date: _selectedDate,
+        duels: duels,
+      );
+
+      final box = Hive.box<Event>('events');
+      box.add(event);
+      widget.onEntrySaved();
+
+      // Reset state
+      _selectedDate = DateTime.now();
+      _turnNumber = 1;
+      _duels.clear();
+      _duels.add(_DuelFormData());
+
+      setState(() {});
     }
   }
 
@@ -128,15 +106,7 @@ class _EntryFormScreenState extends State<EntryFormScreen> {
           key: _formKey,
           child: SingleChildScrollView(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                TextFormField(
-                  controller: _gameController,
-                  decoration: InputDecoration(labelText: 'Title'),
-                  style: TextStyle(color: Colors.white),
-                  validator: (value) => value!.isEmpty ? 'Enter a title' : null,
-                ),
-                SizedBox(height: 10),
                 ListTile(
                   title: Text(
                     "Date: ${_selectedDate.toLocal().toString().split(' ')[0]}",
@@ -145,118 +115,16 @@ class _EntryFormScreenState extends State<EntryFormScreen> {
                   trailing: Icon(Icons.calendar_today, color: Colors.white),
                   onTap: _pickDate,
                 ),
-                TextFormField(
-                  controller: _characterController,
-                  decoration: InputDecoration(labelText: 'Your Character'),
-                  style: TextStyle(color: Colors.white),
-                  validator: (value) =>
-                      value!.isEmpty ? 'Enter your character' : null,
-                ),
-                TextFormField(
-                  controller: _opponentController,
-                  decoration: InputDecoration(labelText: 'Enemy Character'),
-                  style: TextStyle(color: Colors.white),
-                  validator: (value) =>
-                      value!.isEmpty ? 'Enter enemy character' : null,
-                ),
                 SizedBox(height: 20),
-                Text(
-                  '--- Turn ${_turns.length + 1} ---',
-                  style: TextStyle(color: Colors.teal, fontSize: 16),
-                ),
-                TextFormField(
-                  controller: _playerWoundsController,
-                  keyboardType: TextInputType.number,
-                  decoration:
-                      InputDecoration(labelText: 'Your # of Starting Wounds'),
-                  style: TextStyle(color: Colors.white),
-                  validator: (value) =>
-                      value!.isEmpty ? 'Enter your wounds' : null,
-                ),
-                TextFormField(
-                  controller: _opponentWoundsController,
-                  keyboardType: TextInputType.number,
-                  decoration:
-                      InputDecoration(labelText: "Enemy's # of Starting Wounds"),
-                  style: TextStyle(color: Colors.white),
-                  validator: (value) =>
-                      value!.isEmpty ? 'Enter enemy wounds' : null,
-                ),
-                SizedBox(height: 20),
-                DropdownButtonFormField<String>(
-                  value: _playerGambit,
-                  items: gambitOptions
-                      .map((g) => DropdownMenuItem(value: g, child: Text(g)))
-                      .toList(),
-                  onChanged: (value) =>
-                      setState(() => _playerGambit = value!),
-                  decoration: InputDecoration(labelText: 'Your Gambit'),
-                  dropdownColor: Colors.grey[900],
-                  style: TextStyle(color: Colors.white),
-                ),
-                DropdownButtonFormField<String>(
-                  value: _opponentGambit,
-                  items: gambitOptions
-                      .map((g) => DropdownMenuItem(value: g, child: Text(g)))
-                      .toList(),
-                  onChanged: (value) =>
-                      setState(() => _opponentGambit = value!),
-                  decoration: InputDecoration(labelText: 'Enemy Gambit'),
-                  dropdownColor: Colors.grey[900],
-                  style: TextStyle(color: Colors.white),
-                ),
-                SizedBox(height: 20),
-                Text('Focus Roll',
-                    style: TextStyle(color: Colors.white, fontSize: 16)),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    _buildColoredButton(
-                      label: 'Won',
-                      selected: _focusRollWin == true,
-                      selectedColor: Colors.green,
-                      onTap: () => setState(() => _focusRollWin = true),
-                    ),
-                    _buildColoredButton(
-                      label: 'Lost',
-                      selected: _focusRollWin == false,
-                      selectedColor: Colors.red[900]!,
-                      onTap: () => setState(() => _focusRollWin = false),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 20),
-                Text('Victory or Death',
-                    style: TextStyle(color: Colors.white, fontSize: 16)),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    _buildColoredButton(
-                      label: 'Victory',
-                      selected: _matchWin == true,
-                      selectedColor: Colors.green,
-                      onTap: () => setState(() => _matchWin = true),
-                    ),
-                    _buildColoredButton(
-                      label: 'Death',
-                      selected: _matchWin == false,
-                      selectedColor: Colors.red[900]!,
-                      onTap: () => setState(() => _matchWin = false),
-                    ),
-                  ],
-                ),
+                for (int i = 0; i < _duels.length; i++)
+                  _buildDuelForm(_duels[i], i, gambitOptions),
                 SizedBox(height: 30),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    ElevatedButton(
-                      onPressed: _addTurn,
-                      child: Text('New Turn'),
-                    ),
-                    ElevatedButton(
-                      onPressed: _saveEvent,
-                      child: Text('Save Event'),
-                    ),
+                    ElevatedButton(onPressed: _addDuel, child: Text('Add Duel')),
+                    ElevatedButton(onPressed: _addTurnToAllDuels, child: Text('Add Turn')),
+                    ElevatedButton(onPressed: _saveEvent, child: Text('Save')),
                   ],
                 ),
               ],
@@ -264,6 +132,136 @@ class _EntryFormScreenState extends State<EntryFormScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildDuelForm(_DuelFormData duel, int duelIndex, List<String> gambitOptions) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Divider(color: Colors.teal),
+        Text('=== Duel ${duelIndex + 1} ===', style: TextStyle(color: Colors.teal, fontSize: 18)),
+        TextFormField(
+          controller: duel.titleController,
+          decoration: InputDecoration(labelText: 'Title'),
+          style: TextStyle(color: Colors.white),
+          validator: (value) => value!.isEmpty ? 'Enter a title' : null,
+        ),
+        TextFormField(
+          controller: duel.yourCharacterController,
+          decoration: InputDecoration(labelText: 'Your Character'),
+          style: TextStyle(color: Colors.white),
+          validator: (value) => value!.isEmpty ? 'Enter your character' : null,
+        ),
+        TextFormField(
+          controller: duel.enemyCharacterController,
+          decoration: InputDecoration(labelText: 'Enemy Character'),
+          style: TextStyle(color: Colors.white),
+          validator: (value) => value!.isEmpty ? 'Enter enemy character' : null,
+        ),
+        SizedBox(height: 12),
+        for (int turnIndex = 0; turnIndex < duel.turns.length; turnIndex++)
+          _buildTurnBlock(
+            duel.turns[turnIndex],
+            turnIndex,
+            isFinalTurn: turnIndex == duel.turns.length - 1,
+            duel: duel,
+            gambitOptions: gambitOptions,
+          ),
+      ],
+    );
+  }
+
+  Widget _buildTurnBlock(
+    _TurnInputs turn,
+    int turnIndex, {
+    required bool isFinalTurn,
+    required _DuelFormData duel,
+    required List<String> gambitOptions,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '--- Turn ${turnIndex + 1}${isFinalTurn ? " (Final Turn)" : ""} ---',
+          style: TextStyle(color: Colors.teal, fontSize: 16),
+        ),
+        TextFormField(
+          controller: turn.playerWoundsController,
+          keyboardType: TextInputType.number,
+          decoration: InputDecoration(labelText: 'Your # of Starting Wounds'),
+          style: TextStyle(color: Colors.white),
+          validator: (value) => value!.isEmpty ? 'Enter your wounds' : null,
+        ),
+        TextFormField(
+          controller: turn.opponentWoundsController,
+          keyboardType: TextInputType.number,
+          decoration: InputDecoration(labelText: "Enemy's # of Starting Wounds"),
+          style: TextStyle(color: Colors.white),
+          validator: (value) => value!.isEmpty ? 'Enter enemy wounds' : null,
+        ),
+        DropdownButtonFormField<String>(
+          value: turn.playerGambit,
+          items: gambitOptions.map((g) => DropdownMenuItem(value: g, child: Text(g))).toList(),
+          onChanged: (value) => setState(() => turn.playerGambit = value!),
+          decoration: InputDecoration(labelText: 'Your Gambit'),
+          dropdownColor: Colors.grey[900],
+          style: TextStyle(color: Colors.white),
+        ),
+        DropdownButtonFormField<String>(
+          value: turn.opponentGambit,
+          items: gambitOptions.map((g) => DropdownMenuItem(value: g, child: Text(g))).toList(),
+          onChanged: (value) => setState(() => turn.opponentGambit = value!),
+          decoration: InputDecoration(labelText: 'Enemy Gambit'),
+          dropdownColor: Colors.grey[900],
+          style: TextStyle(color: Colors.white),
+        ),
+        Text('Focus Roll', style: TextStyle(color: Colors.white, fontSize: 16)),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            _buildColoredButton(
+              label: 'Won',
+              selected: turn.focusRollWin == true,
+              selectedColor: Colors.green,
+              onTap: () => setState(() => turn.focusRollWin = true),
+            ),
+            _buildColoredButton(
+              label: 'Lost',
+              selected: turn.focusRollWin == false,
+              selectedColor: Colors.red[900]!,
+              onTap: () => setState(() => turn.focusRollWin = false),
+            ),
+          ],
+        ),
+        if (isFinalTurn) ...[
+          Text('Result', style: TextStyle(color: Colors.white, fontSize: 16)),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              _buildColoredButton(
+                label: 'Victory',
+                selected: duel.result == MatchResult.victory,
+                selectedColor: Colors.green,
+                onTap: () => setState(() => duel.result = MatchResult.victory),
+              ),
+              _buildColoredButton(
+                label: 'Draw',
+                selected: duel.result == MatchResult.draw,
+                selectedColor: Colors.lightBlueAccent,
+                onTap: () => setState(() => duel.result = MatchResult.draw),
+              ),
+              _buildColoredButton(
+                label: 'Death',
+                selected: duel.result == MatchResult.death,
+                selectedColor: Colors.red[900]!,
+                onTap: () => setState(() => duel.result = MatchResult.death),
+              ),
+            ],
+          ),
+        ],
+        SizedBox(height: 20),
+      ],
     );
   }
 
@@ -288,6 +286,24 @@ class _EntryFormScreenState extends State<EntryFormScreen> {
     );
   }
 }
+
+class _TurnInputs {
+  final playerWoundsController = TextEditingController();
+  final opponentWoundsController = TextEditingController();
+  String playerGambit = 'Seize the Initiative';
+  String opponentGambit = 'Seize the Initiative';
+  bool focusRollWin = true;
+}
+
+class _DuelFormData {
+  final titleController = TextEditingController();
+  final yourCharacterController = TextEditingController();
+  final enemyCharacterController = TextEditingController();
+  final List<_TurnInputs> turns = [ _TurnInputs() ];
+  MatchResult result = MatchResult.victory;
+}
+
+
 
 
 

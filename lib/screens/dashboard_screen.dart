@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:hive/hive.dart';
 import '../models/event_model.dart';
+import '../models/duel_model.dart';
 
 class DashboardScreen extends StatelessWidget {
   @override
@@ -10,7 +11,8 @@ class DashboardScreen extends StatelessWidget {
     final events = box.values.toList();
 
     int totalWins = 0;
-    int totalLosses = 0;
+    int totalDraws = 0;
+    int totalDeaths = 0;
     int focusWins = 0;
     int focusLosses = 0;
 
@@ -19,30 +21,38 @@ class DashboardScreen extends StatelessWidget {
     final winningCharacters = <String, int>{};
 
     for (var event in events) {
-      for (var turn in event.turns) {
-        // Total wins/losses
-        if (event.matchWin) {
-          totalWins++;
-          winningGambits[turn.playerGambit] =
-              (winningGambits[turn.playerGambit] ?? 0) + 1;
-          winningCharacters[event.yourCharacter] =
-              (winningCharacters[event.yourCharacter] ?? 0) + 1;
-        } else {
-          totalLosses++;
+      for (var duel in event.duels) {
+        for (var turn in duel.turns) {
+          if (turn.focusRollWin) {
+            focusWins++;
+          } else {
+            focusLosses++;
+          }
+
+          gambitUsage[turn.playerGambit] =
+              (gambitUsage[turn.playerGambit] ?? 0) + 1;
         }
 
-        // Focus roll stats (moved back to Turn)
-        if (turn.focusRollWin) {
-          focusWins++;
-        } else {
-          focusLosses++;
+        switch (duel.result) {
+          case MatchResult.victory:
+            totalWins++;
+            final finalTurn = duel.turns.last;
+            winningGambits[finalTurn.playerGambit] =
+                (winningGambits[finalTurn.playerGambit] ?? 0) + 1;
+            winningCharacters[duel.yourCharacter] =
+                (winningCharacters[duel.yourCharacter] ?? 0) + 1;
+            break;
+          case MatchResult.draw:
+            totalDraws++;
+            break;
+          case MatchResult.death:
+            totalDeaths++;
+            break;
         }
-
-        // Total gambit usage
-        gambitUsage[turn.playerGambit] =
-            (gambitUsage[turn.playerGambit] ?? 0) + 1;
       }
     }
+
+    final totalDuels = totalWins + totalDraws + totalDeaths;
 
     String mostUsedGambit = gambitUsage.isEmpty
         ? 'N/A'
@@ -50,17 +60,11 @@ class DashboardScreen extends StatelessWidget {
 
     String mostEffectiveGambit = winningGambits.isEmpty
         ? 'N/A'
-        : winningGambits.entries
-            .reduce((a, b) => a.value >= b.value ? a : b)
-            .key;
+        : winningGambits.entries.reduce((a, b) => a.value >= b.value ? a : b).key;
 
     String mostVictoriousCharacter = winningCharacters.isEmpty
         ? 'N/A'
-        : winningCharacters.entries
-            .reduce((a, b) => a.value >= b.value ? a : b)
-            .key;
-
-    final totalTurns = totalWins + totalLosses;
+        : winningCharacters.entries.reduce((a, b) => a.value >= b.value ? a : b).key;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
@@ -69,12 +73,8 @@ class DashboardScreen extends StatelessWidget {
         children: [
           Center(
             child: Text(
-              'Win/Loss Record',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.teal,
-              ),
+              'Duel Outcomes',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.teal),
             ),
           ),
           SizedBox(height: 8),
@@ -85,27 +85,24 @@ class DashboardScreen extends StatelessWidget {
                 sections: [
                   PieChartSectionData(
                     value: totalWins.toDouble(),
-                    title: totalTurns == 0
-                        ? '0%'
-                        : '${(totalWins / totalTurns * 100).toStringAsFixed(1)}%',
+                    title: totalDuels == 0 ? '0%' : '${(totalWins / totalDuels * 100).toStringAsFixed(1)}%',
                     color: Colors.green,
                     radius: 60,
-                    titleStyle: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    titleStyle: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                   ),
                   PieChartSectionData(
-                    value: totalLosses.toDouble(),
-                    title: totalTurns == 0
-                        ? '0%'
-                        : '${(totalLosses / totalTurns * 100).toStringAsFixed(1)}%',
+                    value: totalDraws.toDouble(),
+                    title: totalDuels == 0 ? '0%' : '${(totalDraws / totalDuels * 100).toStringAsFixed(1)}%',
+                    color: Colors.lightBlueAccent,
+                    radius: 60,
+                    titleStyle: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                  ),
+                  PieChartSectionData(
+                    value: totalDeaths.toDouble(),
+                    title: totalDuels == 0 ? '0%' : '${(totalDeaths / totalDuels * 100).toStringAsFixed(1)}%',
                     color: Colors.red[900],
                     radius: 60,
-                    titleStyle: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    titleStyle: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                   ),
                 ],
                 sectionsSpace: 2,
@@ -116,11 +113,8 @@ class DashboardScreen extends StatelessWidget {
           SizedBox(height: 8),
           Center(
             child: Text(
-              '$totalWins Wins / $totalLosses Losses',
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.white,
-              ),
+              '$totalWins Wins / $totalDraws Draws / $totalDeaths Deaths',
+              style: TextStyle(fontSize: 16, color: Colors.white),
             ),
           ),
           SizedBox(height: 24),
@@ -157,4 +151,6 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 }
+
+
 

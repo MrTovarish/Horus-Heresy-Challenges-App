@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import '../models/event_model.dart';
-import '../models/turn_model.dart';
+import '../models/duel_model.dart';
 import 'event_detail_screen.dart';
 
 class EntryListScreen extends StatelessWidget {
@@ -11,26 +11,52 @@ class EntryListScreen extends StatelessWidget {
       valueListenable: Hive.box<Event>('events').listenable(),
       builder: (context, Box<Event> box, _) {
         if (box.values.isEmpty) {
-          return Center(child: Text('No events yet.', style: TextStyle(color: Colors.white)));
+          return Center(
+              child: Text('No events yet.', style: TextStyle(color: Colors.white)));
+        }
+
+        final allEntries = <_DuelListEntry>[];
+
+        // Flatten each duel from each event into separate list items
+        for (int eventIndex = 0; eventIndex < box.length; eventIndex++) {
+          final event = box.getAt(eventIndex);
+          if (event == null || event.duels.isEmpty) continue;
+
+          for (int duelIndex = 0; duelIndex < event.duels.length; duelIndex++) {
+            allEntries.add(_DuelListEntry(
+              eventIndex: eventIndex,
+              duelIndex: duelIndex,
+              event: event,
+              duel: event.duels[duelIndex],
+            ));
+          }
         }
 
         return ListView.builder(
-          itemCount: box.length,
+          itemCount: allEntries.length,
           itemBuilder: (context, index) {
-            final event = box.getAt(index);
+            final entry = allEntries[index];
 
-            if (event == null || event.turns.isEmpty) {
-              return ListTile(
-                title: Text('Invalid or empty event at index $index', style: TextStyle(color: Colors.red)),
-              );
+            String resultText;
+            Color resultColor;
+
+            switch (entry.duel.result) {
+              case MatchResult.victory:
+                resultText = 'Victory';
+                resultColor = Colors.green;
+                break;
+              case MatchResult.draw:
+                resultText = 'Draw';
+                resultColor = Colors.lightBlue;
+                break;
+              case MatchResult.death:
+                resultText = 'Death';
+                resultColor = Colors.red[900]!;
+                break;
             }
 
-            
-            final resultText = event.matchWin ? 'Victory' : 'Death';
-            final resultColor = event.matchWin ? Colors.green : Colors.red[900];
-
             return Dismissible(
-              key: Key(event.key.toString()),
+              key: Key('${entry.event.key}_${entry.duelIndex}'),
               background: Container(
                 color: Colors.red[700],
                 alignment: Alignment.centerLeft,
@@ -45,34 +71,45 @@ class EntryListScreen extends StatelessWidget {
               ),
               confirmDismiss: (_) => _confirmDelete(context),
               onDismissed: (_) {
-                box.deleteAt(index);
+                final box = Hive.box<Event>('events');
+                box.deleteAt(entry.eventIndex);
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text('Event deleted')),
                 );
               },
               child: ListTile(
-                title: Text(
-                  event.title,
-                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                ),
-                subtitle: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                title: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      '${event.date.toLocal().toString().split(' ')[0]} — ${event.yourCharacter}',
-                      style: TextStyle(color: Colors.grey[300]),
+                    Expanded(
+                      child: Text(
+                        entry.duel.title,
+                        style: TextStyle(
+                            color: Colors.white, fontWeight: FontWeight.bold),
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                     Text(
                       resultText,
-                      style: TextStyle(color: resultColor, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        color: resultColor,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ],
+                ),
+                subtitle: Text(
+                  '${entry.event.date.toLocal().toString().split(' ')[0]} — ${entry.duel.yourCharacter}',
+                  style: TextStyle(color: Colors.grey[300]),
                 ),
                 onTap: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => EventDetailScreen(event: event),
+                      builder: (_) => EventDetailScreen(
+                        event: entry.event,
+                        duelIndex: entry.duelIndex,
+                      ),
                     ),
                   );
                 },
@@ -107,6 +144,20 @@ class EntryListScreen extends StatelessWidget {
         ) ??
         false;
   }
+}
+
+class _DuelListEntry {
+  final int eventIndex;
+  final int duelIndex;
+  final Event event;
+  final Duel duel;
+
+  _DuelListEntry({
+    required this.eventIndex,
+    required this.duelIndex,
+    required this.event,
+    required this.duel,
+  });
 }
 
 

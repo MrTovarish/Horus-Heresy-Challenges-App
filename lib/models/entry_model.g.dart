@@ -25,7 +25,7 @@ class EntryAdapter extends TypeAdapter<Entry> {
       opponentWounds: fields[5] as int,
       gambit: fields[6] as String,
       focusRollWin: fields[7] as bool,
-      matchWin: fields[8] as bool,
+      result: fields[8] as MatchResult,
       opponentGambit: fields[9] as String,
     );
   }
@@ -51,7 +51,7 @@ class EntryAdapter extends TypeAdapter<Entry> {
       ..writeByte(7)
       ..write(obj.focusRollWin)
       ..writeByte(8)
-      ..write(obj.matchWin)
+      ..write(obj.result)
       ..writeByte(9)
       ..write(obj.opponentGambit);
   }

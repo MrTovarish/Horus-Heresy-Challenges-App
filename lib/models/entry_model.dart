@@ -1,4 +1,5 @@
 import 'package:hive/hive.dart';
+import 'duel_model.dart';
 
 part 'entry_model.g.dart';
 
@@ -29,7 +30,7 @@ class Entry extends HiveObject {
   late bool focusRollWin;
 
   @HiveField(8)
-  late bool matchWin;
+  late MatchResult result;
 
   @HiveField(9)
   late String opponentGambit;
@@ -43,7 +44,7 @@ class Entry extends HiveObject {
     required this.opponentWounds,
     required this.gambit,
     required this.focusRollWin,
-    required this.matchWin,
+    required this.result,
     required this.opponentGambit,
   });
 }

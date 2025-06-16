@@ -17,31 +17,19 @@ class EventAdapter extends TypeAdapter<Event> {
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
     return Event(
-      title: fields[0] as String,
-      date: fields[1] as DateTime,
-      yourCharacter: fields[2] as String,
-      enemyCharacter: fields[3] as String,
-      turns: (fields[4] as List).cast<Turn>(),
-      matchWin: fields[5] as bool,
+      date: fields[0] as DateTime,
+      duels: (fields[1] as List).cast<Duel>(),
     );
   }
 
   @override
   void write(BinaryWriter writer, Event obj) {
     writer
-      ..writeByte(6)
-      ..writeByte(0)
-      ..write(obj.title)
-      ..writeByte(1)
-      ..write(obj.date)
       ..writeByte(2)
-      ..write(obj.yourCharacter)
-      ..writeByte(3)
-      ..write(obj.enemyCharacter)
-      ..writeByte(4)
-      ..write(obj.turns)
-      ..writeByte(5)
-      ..write(obj.matchWin);
+      ..writeByte(0)
+      ..write(obj.date)
+      ..writeByte(1)
+      ..write(obj.duels);
   }
 
   @override
