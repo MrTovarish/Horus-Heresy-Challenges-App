@@ -76,7 +76,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
     ];
 
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: const Color.fromARGB(255, 6, 11, 17),
       appBar: AppBar(
         title: Text('Duel Details'),
         backgroundColor: Colors.grey[900],
@@ -156,7 +156,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                               onChanged: (value) => setState(() => turn.playerGambit = value!),
                               decoration: InputDecoration(labelText: 'Your Gambit'),
                               dropdownColor: Colors.grey[900],
-                              style: TextStyle(color: Colors.white),
+                              style: TextStyle(color: const Color.fromARGB(255, 248, 248, 248)),
                             )
                           : Text('Your Gambit: ${turn.playerGambit}', style: _infoStyle()),
                       _isEditing
@@ -216,7 +216,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                                   _buildColoredButton(
                                     label: 'Death',
                                     selected: _duel.result == MatchResult.death,
-                                    selectedColor: Colors.red[900]!,
+                                    selectedColor: const Color.fromARGB(255, 211, 32, 32)!,
                                     onTap: () => setState(() => _duel.result = MatchResult.death),
                                   ),
                                 ],
@@ -246,7 +246,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
       case MatchResult.draw:
         return Colors.lightBlueAccent;
       case MatchResult.death:
-        return Colors.red[900]!;
+        return const Color.fromARGB(255, 214, 33, 33)!;
     }
   }
 
@@ -272,9 +272,9 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
   }
 
   TextStyle _headerStyle() =>
-      TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.teal);
+      TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: const Color.fromARGB(255, 28, 132, 173));
 
-  TextStyle _infoStyle() => TextStyle(fontSize: 16, color: Colors.white);
+  TextStyle _infoStyle() => TextStyle(fontSize: 16, color: const Color.fromARGB(255, 186, 224, 226));
 }
 
 class _EditableTurn {
@@ -302,5 +302,7 @@ class _EditableTurn {
     );
   }
 }
+
+
 
 

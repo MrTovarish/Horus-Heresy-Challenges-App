@@ -45,7 +45,7 @@ class MyApp extends StatelessWidget {
       title: 'Event Tracker',
       theme: ThemeData.dark().copyWith(
         colorScheme: ColorScheme.dark(
-          primary: Colors.teal,
+          primary: const Color.fromARGB(255, 248, 248, 248),
           secondary: Colors.amber,
         ),
         scaffoldBackgroundColor: Colors.black,
@@ -87,8 +87,8 @@ class _HomeScreenState extends State<HomeScreen> {
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
-        backgroundColor: Colors.grey[900],
-        selectedItemColor: Colors.teal,
+        backgroundColor: const Color.fromARGB(255, 2, 21, 39),
+        selectedItemColor: const Color.fromARGB(255, 151, 234, 245),
         unselectedItemColor: Colors.grey,
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(icon: Icon(Icons.list), label: 'Entries'),

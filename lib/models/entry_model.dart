@@ -47,4 +47,30 @@ class Entry extends HiveObject {
     required this.result,
     required this.opponentGambit,
   });
+
+  Map<String, dynamic> toJson() => {
+        'game': game,
+        'date': date.toIso8601String(),
+        'character': character,
+        'playerWounds': playerWounds,
+        'opponent': opponent,
+        'opponentWounds': opponentWounds,
+        'gambit': gambit,
+        'focusRollWin': focusRollWin,
+        'result': result.toShortString(),
+        'opponentGambit': opponentGambit,
+      };
+
+  factory Entry.fromJson(Map<String, dynamic> json) => Entry(
+        game: json['game'],
+        date: DateTime.parse(json['date']),
+        character: json['character'],
+        playerWounds: json['playerWounds'],
+        opponent: json['opponent'],
+        opponentWounds: json['opponentWounds'],
+        gambit: json['gambit'],
+        focusRollWin: json['focusRollWin'],
+        result: MatchResultExtension.fromString(json['result']),
+        opponentGambit: json['opponentGambit'],
+      );
 }
