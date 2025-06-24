@@ -19,7 +19,6 @@ dependencies:
   file_selector_linux: ^0.9.3+2
   path_provider: ^2.1.2
   share_plus: ^7.2.1
-  flutter_launcher_icons: ^0.13.1
 
 
 dev_dependencies:
@@ -27,6 +26,7 @@ dev_dependencies:
     sdk: flutter
   hive_generator: ^2.0.1
   build_runner: ^2.3.3
+  flutter_launcher_icons: ^0.13.1
 
 flutter:
   uses-material-design: true
@@ -36,4 +36,6 @@ flutter:
 flutter_icons:
   android: true
   ios: true
-  image_path: "assets/icon/HCIcon512PNG.png"  # Replace with your actual icon path
+  image_path_android: "assets/icon/HCIcon512PNG.png"
+  image_path_ios: "assets/icon/HCIcon512PNG.png"
+  adaptive_icon_background: "#FFFFFF"

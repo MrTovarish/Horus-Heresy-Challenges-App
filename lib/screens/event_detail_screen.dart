@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
+import 'package:dropdown_search/dropdown_search.dart';
 import '../models/event_model.dart';
 import '../models/duel_model.dart';
 import '../models/turn_model.dart';
@@ -21,6 +22,18 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
   late TextEditingController _enemyCharacterController;
   late List<_EditableTurn> _turns;
   bool _isEditing = false;
+
+  final gambitOptions = [
+    'Seize the Initiative',
+    'Flurry of Blows',
+    'Feint and Riposte',
+    'Finishing Blow',
+    'Test the Foe',
+    'Guard Up',
+    'Taunt and Bait',
+    'Grandstand',
+    'Withdraw'
+  ];
 
   @override
   void initState() {
@@ -68,13 +81,6 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final gambitOptions = [
-      'Seize the Initiative',
-      'Flurry of Blows',
-      'Feint and Riposte',
-      'Finishing Blow',
-    ];
-
     return Scaffold(
       backgroundColor: const Color.fromARGB(255, 6, 11, 17),
       appBar: AppBar(
@@ -91,29 +97,9 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
         padding: const EdgeInsets.all(16.0),
         child: ListView(
           children: [
-            _isEditing
-                ? TextFormField(
-                    controller: _titleController,
-                    style: _infoStyle(),
-                    decoration: InputDecoration(labelText: 'Title'),
-                  )
-                : Text('Title: ${_titleController.text}', style: _headerStyle()),
-            SizedBox(height: 8),
-            _isEditing
-                ? TextFormField(
-                    controller: _yourCharacterController,
-                    style: _infoStyle(),
-                    decoration: InputDecoration(labelText: 'Your Character'),
-                  )
-                : Text('Your Character: ${_yourCharacterController.text}', style: _infoStyle()),
-            SizedBox(height: 8),
-            _isEditing
-                ? TextFormField(
-                    controller: _enemyCharacterController,
-                    style: _infoStyle(),
-                    decoration: InputDecoration(labelText: 'Enemy Character'),
-                  )
-                : Text('Enemy Character: ${_enemyCharacterController.text}', style: _infoStyle()),
+            _editableField('Title', _titleController),
+            _editableField('Your Character', _yourCharacterController),
+            _editableField('Enemy Character', _enemyCharacterController),
             SizedBox(height: 20),
             ..._turns.asMap().entries.map((entry) {
               final turnIndex = entry.key;
@@ -133,41 +119,13 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                         style: TextStyle(fontWeight: FontWeight.bold, color: Colors.teal),
                       ),
                       SizedBox(height: 4),
+                      _editableField('Your Wounds', turn.playerWoundsController, isNumber: true),
+                      _editableField('Enemy Wounds', turn.opponentWoundsController, isNumber: true),
                       _isEditing
-                          ? TextFormField(
-                              controller: turn.playerWoundsController,
-                              keyboardType: TextInputType.number,
-                              decoration: InputDecoration(labelText: 'Your Wounds'),
-                              style: _infoStyle(),
-                            )
-                          : Text('Your Wounds: ${turn.playerWoundsController.text}', style: _infoStyle()),
-                      _isEditing
-                          ? TextFormField(
-                              controller: turn.opponentWoundsController,
-                              keyboardType: TextInputType.number,
-                              decoration: InputDecoration(labelText: 'Enemy Wounds'),
-                              style: _infoStyle(),
-                            )
-                          : Text('Enemy Wounds: ${turn.opponentWoundsController.text}', style: _infoStyle()),
-                      _isEditing
-                          ? DropdownButtonFormField<String>(
-                              value: turn.playerGambit,
-                              items: gambitOptions.map((g) => DropdownMenuItem(value: g, child: Text(g))).toList(),
-                              onChanged: (value) => setState(() => turn.playerGambit = value!),
-                              decoration: InputDecoration(labelText: 'Your Gambit'),
-                              dropdownColor: Colors.grey[900],
-                              style: TextStyle(color: const Color.fromARGB(255, 248, 248, 248)),
-                            )
+                          ? _gambitDropdown(turn.playerGambit, (v) => setState(() => turn.playerGambit = v), 'Your Gambit')
                           : Text('Your Gambit: ${turn.playerGambit}', style: _infoStyle()),
                       _isEditing
-                          ? DropdownButtonFormField<String>(
-                              value: turn.opponentGambit,
-                              items: gambitOptions.map((g) => DropdownMenuItem(value: g, child: Text(g))).toList(),
-                              onChanged: (value) => setState(() => turn.opponentGambit = value!),
-                              decoration: InputDecoration(labelText: 'Enemy Gambit'),
-                              dropdownColor: Colors.grey[900],
-                              style: TextStyle(color: Colors.white),
-                            )
+                          ? _gambitDropdown(turn.opponentGambit, (v) => setState(() => turn.opponentGambit = v), 'Enemy Gambit')
                           : Text('Enemy Gambit: ${turn.opponentGambit}', style: _infoStyle()),
                       _isEditing
                           ? Column(
@@ -176,19 +134,11 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                                 Text('Focus Roll:', style: _infoStyle()),
                                 Row(
                                   children: [
-                                    _buildColoredButton(
-                                      label: 'Won',
-                                      selected: turn.focusRollWin == true,
-                                      selectedColor: Colors.green,
-                                      onTap: () => setState(() => turn.focusRollWin = true),
-                                    ),
+                                    _buildColoredButton('Won', turn.focusRollWin, Colors.green,
+                                        () => setState(() => turn.focusRollWin = true)),
                                     SizedBox(width: 10),
-                                    _buildColoredButton(
-                                      label: 'Lost',
-                                      selected: turn.focusRollWin == false,
-                                      selectedColor: Colors.red[900]!,
-                                      onTap: () => setState(() => turn.focusRollWin = false),
-                                    ),
+                                    _buildColoredButton('Lost', !turn.focusRollWin, Colors.red[900]!,
+                                        () => setState(() => turn.focusRollWin = false)),
                                   ],
                                 ),
                               ],
@@ -199,34 +149,19 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                             ? Row(
                                 children: [
                                   Text('Result: ', style: _infoStyle()),
-                                  _buildColoredButton(
-                                    label: 'Victory',
-                                    selected: _duel.result == MatchResult.victory,
-                                    selectedColor: Colors.green,
-                                    onTap: () => setState(() => _duel.result = MatchResult.victory),
-                                  ),
+                                  _buildColoredButton('Victory', _duel.result == MatchResult.victory, Colors.green,
+                                      () => setState(() => _duel.result = MatchResult.victory)),
                                   SizedBox(width: 10),
-                                  _buildColoredButton(
-                                    label: 'Draw',
-                                    selected: _duel.result == MatchResult.draw,
-                                    selectedColor: Colors.lightBlueAccent,
-                                    onTap: () => setState(() => _duel.result = MatchResult.draw),
-                                  ),
+                                  _buildColoredButton('Draw', _duel.result == MatchResult.draw, Colors.lightBlueAccent,
+                                      () => setState(() => _duel.result = MatchResult.draw)),
                                   SizedBox(width: 10),
-                                  _buildColoredButton(
-                                    label: 'Death',
-                                    selected: _duel.result == MatchResult.death,
-                                    selectedColor: const Color.fromARGB(255, 211, 32, 32)!,
-                                    onTap: () => setState(() => _duel.result = MatchResult.death),
-                                  ),
+                                  _buildColoredButton('Death', _duel.result == MatchResult.death,
+                                      const Color.fromARGB(255, 211, 32, 32), () => setState(() => _duel.result = MatchResult.death)),
                                 ],
                               )
                             : Text(
                                 'Result: ${_duel.result.name[0].toUpperCase()}${_duel.result.name.substring(1)}',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: _getResultColor(_duel.result),
-                                ),
+                                style: TextStyle(fontSize: 16, color: _getResultColor(_duel.result)),
                               ),
                     ],
                   ),
@@ -239,6 +174,29 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
     );
   }
 
+  Widget _editableField(String label, TextEditingController controller, {bool isNumber = false}) {
+    return _isEditing
+        ? TextFormField(
+            controller: controller,
+            keyboardType: isNumber ? TextInputType.number : TextInputType.text,
+            style: _infoStyle(),
+            decoration: InputDecoration(labelText: label),
+          )
+        : Text('$label: ${controller.text}', style: _infoStyle());
+  }
+
+  Widget _gambitDropdown(String selected, ValueChanged<String> onChanged, String label) {
+    return DropdownSearch<String>(
+      selectedItem: selected,
+      items: gambitOptions,
+      popupProps: PopupProps.menu(showSearchBox: true),
+      dropdownDecoratorProps: DropDownDecoratorProps(
+        dropdownSearchDecoration: InputDecoration(labelText: label),
+      ),
+      onChanged: (value) => onChanged(value ?? selected),
+    );
+  }
+
   Color _getResultColor(MatchResult result) {
     switch (result) {
       case MatchResult.victory:
@@ -246,16 +204,11 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
       case MatchResult.draw:
         return Colors.lightBlueAccent;
       case MatchResult.death:
-        return const Color.fromARGB(255, 214, 33, 33)!;
+        return const Color.fromARGB(255, 214, 33, 33);
     }
   }
 
-  Widget _buildColoredButton({
-    required String label,
-    required bool selected,
-    required Color selectedColor,
-    required VoidCallback onTap,
-  }) {
+  Widget _buildColoredButton(String label, bool selected, Color selectedColor, VoidCallback onTap) {
     return ElevatedButton(
       onPressed: onTap,
       style: ElevatedButton.styleFrom(
@@ -270,9 +223,6 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
       ),
     );
   }
-
-  TextStyle _headerStyle() =>
-      TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: const Color.fromARGB(255, 28, 132, 173));
 
   TextStyle _infoStyle() => TextStyle(fontSize: 16, color: const Color.fromARGB(255, 186, 224, 226));
 }

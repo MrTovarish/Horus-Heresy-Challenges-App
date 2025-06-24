@@ -22,6 +22,9 @@ void main() async {
   Hive.registerAdapter(EventAdapter());
   Hive.registerAdapter(MatchResultAdapter());
   await Hive.openBox<Event>('events');
+  await Hive.openBox<String>('your_characters');
+  await Hive.openBox<String>('enemy_characters');
+
 
 
   final settingsBox = await Hive.openBox('settings');
