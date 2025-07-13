@@ -24,14 +24,58 @@ class _EntryFormScreenState extends State<EntryFormScreen>
   late AnimationController _animationController;
 
   final List<String> gambitOptions = [
-    'Seize the Initiative',
-    'Flurry of Blows',
+    'A Brother Betrayed',
+    'A Death Long Forseen',
+    'A Saga Woven Of Glory',
+    'A Wall Unyielding',
+    'Aegis of Wisdom',
+    'Angelic Descent',
+    'Archein of Wisdom',
+    'Barbaran Resilience',
+    'Beseech the Gods',
+    'Brutal Dismemberment',
+    'Bulwark of the Imperium',
+    'Calculating Swordsman',
+    'Death by a Thousand Cuts',
+    'Death\'s Champion',
+    'Decapitation Strike',
+    'Dirty Fighter',
+    'Duty is Sacrifice',
+    'Executioner\'s Tax',
     'Feint and Riposte',
     'Finishing Blow',
-    'Test the Foe',
-    'Guard Up',
-    'Taunt and Bait',
+    'Flurry of Blows',
     'Grandstand',
+    'Guard Up',
+    'Hammerblow',
+    'Head-Taker',
+    'Howl of the Death Wolf',
+    'I am Alpharius',
+    'Legion of One',
+    'Merciless Strike',
+    'No Prey Escapes',
+    'Nostroman Courage',
+    'Paragon of Excellence',
+    'Prophetic Duelist',
+    'Seeker of Atonement',
+    'Seize the Iniative',
+    'Skill Unmatched',
+    'Spiteful Demise',
+    'Steadfast Resilience',
+    'Sword of the Order',
+    'Taunt and Bait',
+    'Tempered by War',
+    'Test the Foe',
+    'The Breaker',
+    'The Broken Mirror',
+    'The Line Unbroken',
+    'The Lion\'s Choler',
+    'The Path of the Warrior',
+    'The Shadowed Lord',
+    'The Undying Fire',
+    'Thrall of the Red Thirst',
+    'Violent Overkill',
+    'Witchblood',
     'Withdraw'
   ];
 
@@ -158,66 +202,69 @@ class _EntryFormScreenState extends State<EntryFormScreen>
   }
 
   Widget _buildGambitDropdown(String label, String value, Function(String?) onChanged) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(bottom: 4.0, left: 4),
-          child: Text(label, style: TextStyle(color: Colors.white70)),
-        ),
-        Autocomplete<String>(
-          initialValue: TextEditingValue(text: value),
-          optionsBuilder: (TextEditingValue textEditingValue) {
-            return gambitOptions.where((g) =>
-              g.toLowerCase().contains(textEditingValue.text.toLowerCase()));
-          },
-          onSelected: onChanged,
-          fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
-            return Focus(
-              onFocusChange: (hasFocus) {
-                if (hasFocus) controller.clear();
-              },
-              child: TextFormField(
-                controller: controller,
-                focusNode: focusNode,
-                style: TextStyle(color: Colors.white),
-                decoration: InputDecoration(
-                  filled: true,
-                  fillColor: Colors.black26,
-                  labelStyle: TextStyle(color: Colors.white70, fontSize: 14),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                ),
-                onChanged: (val) => onChanged(val),
-              ),
-            );
-          },
-        )
-      ],
-    );
+  final controller = TextEditingController();
+
+  if (value.isNotEmpty) {
+    controller.text = value;
   }
 
-  Widget _buildDuelForm(_DuelFormData duel, int index) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(height: 20),
-        Text('Challenge #${index + 1}',
-            style: TextStyle(color: Colors.tealAccent, fontSize: 20, fontWeight: FontWeight.w600)),
-        SizedBox(height: 8),
-        _buildTextInput('Name your Challenge', duel.titleController),
-        _buildTextInput('Your Character', duel.yourCharacterController),
-        _buildTextInput('Enemy Character', duel.enemyCharacterController),
-        SizedBox(height: 8),
-        for (int t = 0; t < duel.turns.length; t++)
-          _buildTurnBlock(duel.turns[t], t, duel),
-        Center(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12.0),
-            child: _animatedButton('Add Turn', Colors.blueAccent, () => setState(() => duel.turns.add(_TurnInputs()))),
-          ),
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Padding(
+        padding: const EdgeInsets.only(bottom: 4.0, left: 4),
+        child: Text(label, style: TextStyle(color: Colors.white70)),
+      ),
+      Autocomplete<String>(
+        optionsBuilder: (TextEditingValue textEditingValue) {
+          return gambitOptions.where((g) =>
+              g.toLowerCase().contains(textEditingValue.text.toLowerCase()));
+        },
+        onSelected: (val) {
+          controller.text = val;
+          onChanged(val);
+        },
+        fieldViewBuilder: (context, textEditingController, focusNode, onFieldSubmitted) {
+          // Initialize text only once
+          if (controller.text.isNotEmpty && textEditingController.text.isEmpty) {
+            textEditingController.text = controller.text;
+          }
+
+          return TextFormField(
+            controller: textEditingController,
+            focusNode: focusNode,
+            style: TextStyle(color: Colors.white),
+            decoration: InputDecoration(
+              hintText: 'Type to Filter',
+              hintStyle: TextStyle(color: Colors.white54),
+              filled: true,
+              fillColor: Colors.black26,
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            onChanged: (val) => onChanged(val),
+          );
+        },
+      )
+    ],
+  );
+}
+
+
+  Widget _buildTextInput(String label, TextEditingController controller) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: TextFormField(
+        controller: controller,
+        style: TextStyle(color: Colors.white),
+        decoration: InputDecoration(
+          labelText: label,
+          filled: true,
+          fillColor: Colors.black26,
+          labelStyle: TextStyle(color: Colors.white70, fontSize: 14),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
         ),
-        Divider(color: Colors.white24),
-      ],
+        validator: (val) => val == null || val.isEmpty ? 'Required' : null,
+      ),
     );
   }
 
@@ -228,13 +275,18 @@ class _EntryFormScreenState extends State<EntryFormScreen>
       children: [
         SizedBox(height: 12),
         Text('Turn ${turnIndex + 1}${isFinal ? " (Final Turn)" : ""}',
-            style: TextStyle(color: Colors.cyanAccent, fontSize: 16, fontWeight: FontWeight.w500)),
+            style: TextStyle(color: const Color.fromARGB(255, 109, 145, 243), fontSize: 16, fontWeight: FontWeight.w500)),
         _buildTextInput('Your Wounds', turn.playerWoundsController),
         _buildTextInput('Enemy Wounds', turn.opponentWoundsController),
         _buildGambitDropdown("Your Gambit", turn.playerGambit, (val) => setState(() => turn.playerGambit = val!)),
         _buildGambitDropdown("Enemy Gambit", turn.opponentGambit, (val) => setState(() => turn.opponentGambit = val!)),
         SizedBox(height: 8),
-        Text('Focus Roll', style: TextStyle(color: Colors.white70)),
+        Center(
+          child: Text(
+            'Focus Roll',
+            style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold, fontSize: 14),
+          ),
+        ),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -247,7 +299,12 @@ class _EntryFormScreenState extends State<EntryFormScreen>
         ),
         if (isFinal) ...[
           SizedBox(height: 8),
-          Text('Challenge Result', style: TextStyle(color: Colors.white70)),
+          Center(
+            child: Text(
+              'Challenge Result',
+              style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold, fontSize: 14),
+            ),
+          ),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -266,21 +323,28 @@ class _EntryFormScreenState extends State<EntryFormScreen>
     );
   }
 
-  Widget _buildTextInput(String label, TextEditingController controller) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
-      child: TextFormField(
-        controller: controller,
-        style: TextStyle(color: Colors.white),
-        decoration: InputDecoration(
-          labelText: label,
-          filled: true,
-          fillColor: Colors.black26,
-          labelStyle: TextStyle(color: Colors.white70, fontSize: 14),
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+  Widget _buildDuelForm(_DuelFormData duel, int index) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(height: 20),
+        Text('⚔️Challenge #${index + 1}',
+            style: TextStyle(color: const Color.fromARGB(255, 102, 199, 255), fontSize: 20, fontWeight: FontWeight.w600)),
+        SizedBox(height: 8),
+        _buildTextInput('Name your Challenge', duel.titleController),
+        _buildTextInput('Your Character', duel.yourCharacterController),
+        _buildTextInput('Enemy Character', duel.enemyCharacterController),
+        SizedBox(height: 8),
+        for (int t = 0; t < duel.turns.length; t++)
+          _buildTurnBlock(duel.turns[t], t, duel),
+        Center(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12.0),
+            child: _animatedButton('Add Turn', const Color.fromARGB(255, 53, 104, 194), () => setState(() => duel.turns.add(_TurnInputs()))),
+          ),
         ),
-        validator: (val) => val == null || val.isEmpty ? 'Required' : null,
-      ),
+        Divider(color: Colors.white24),
+      ],
     );
   }
 
@@ -306,7 +370,7 @@ class _EntryFormScreenState extends State<EntryFormScreen>
                 SizedBox(height: 12),
                 ListTile(
                   title: Text(
-                    "Date: ${_selectedDate.toLocal().toString().split(' ')[0]}",
+                    "Select Date: ${_selectedDate.toLocal().toString().split(' ')[0]}",
                     style: TextStyle(color: Colors.white, fontSize: 16),
                   ),
                   trailing: Icon(Icons.calendar_today, color: Colors.white70),
@@ -317,8 +381,8 @@ class _EntryFormScreenState extends State<EntryFormScreen>
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    _animatedButton('Add Challenge', Colors.purple, _addDuel),
-                    _animatedButton('Save', Colors.tealAccent, _saveEvent),
+                    _animatedButton('Add Challenge', const Color.fromARGB(255, 138, 79, 206), _addDuel),
+                    _animatedButton('Save', const Color.fromARGB(255, 10, 196, 152), _saveEvent),
                   ],
                 )
               ],
@@ -333,8 +397,8 @@ class _EntryFormScreenState extends State<EntryFormScreen>
 class _TurnInputs {
   final playerWoundsController = TextEditingController();
   final opponentWoundsController = TextEditingController();
-  String playerGambit = 'Seize the Initiative';
-  String opponentGambit = 'Seize the Initiative';
+  String playerGambit = '';
+  String opponentGambit = '';
   bool focusRollWin = true;
 }
 
@@ -345,6 +409,8 @@ class _DuelFormData {
   List<_TurnInputs> turns = [_TurnInputs()];
   MatchResult result = MatchResult.victory;
 }
+
+
 
 
 

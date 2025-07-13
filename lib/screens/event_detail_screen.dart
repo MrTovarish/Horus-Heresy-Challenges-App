@@ -4,6 +4,7 @@ import 'package:dropdown_search/dropdown_search.dart';
 import '../models/event_model.dart';
 import '../models/duel_model.dart';
 import '../models/turn_model.dart';
+import 'package:share_plus/share_plus.dart';
 
 class EventDetailScreen extends StatefulWidget {
   final Event event;
@@ -24,14 +25,58 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
   bool _isEditing = false;
 
   final gambitOptions = [
-    'Seize the Initiative',
-    'Flurry of Blows',
+    'A Brother Betrayed',
+    'A Death Long Forseen',
+    'A Saga Woven Of Glory',
+    'A Wall Unyielding',
+    'Aegis of Wisdom',
+    'Angelic Descent',
+    'Archein of Wisdom',
+    'Barbaran Resilience',
+    'Beseech the Gods'
+    'Brutal Dismemberment',
+    'Bulwark of the Imperium',
+    'Calculating Swordsman',
+    'Death by a Thousand Cuts',
+    'Death\'s Champion',
+    'Decapitation Strike',
+    'Dirty Fighter',
+    'Duty is Sacrifice',
+    'Executioner\'s Tax',
     'Feint and Riposte',
     'Finishing Blow',
-    'Test the Foe',
-    'Guard Up',
-    'Taunt and Bait',
+    'Flurry of Blows',
     'Grandstand',
+    'Guard Up',
+    'Hammerblow',
+    'Head-Taker',
+    'Howl of the Death Wolf',
+    'I am Alpharius',
+    'Legion of One',
+    'Merciless Strike',
+    'No Prey Escapes',
+    'Nostroman Courage',
+    'Paragon of Excellence',
+    'Prophetic Duelist',
+    'Seeker of Atonement',
+    'Seize the Iniative',
+    'Skill Unmatched',
+    'Spiteful Demise',
+    'Steadfast Resilience',
+    'Sword of the Order',
+    'Taunt and Bait',
+    'Tempered by War',
+    'Test the Foe',
+    'The Breaker',
+    'The Broken Mirror',
+    'The Line Unbroken',
+    'The Lion\'s Choler',
+    'The Path of the Warrior',
+    'The Shadowed Lord',
+    'The Undying Fire',
+    'Thrall of the Red Thirst',
+    'Violent Overkill',
+    'Witchblood',
     'Withdraw'
   ];
 

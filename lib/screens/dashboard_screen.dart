@@ -71,15 +71,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
 
     final totalDuels = wins + draws + deaths;
-    final mostUsedGambit = getTopKey(gambitUsage);
-    final mostEffectiveGambit = getTopKey(winningGambits);
-    final mostVictoriousCharacter = getTopKey(winningCharacters);
-    final rival = getTopKey(losingEnemies);
+    final topUsedGambits = getTopEntries(gambitUsage);
+    final topEffectiveGambits = getTopEntries(winningGambits);
+    final topVictoriousChars = getTopEntries(winningCharacters);
+    final topRivals = getTopEntries(losingEnemies);
 
     return Scaffold(
       backgroundColor: const Color.fromARGB(255, 3, 12, 20),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(12.0),
+        padding: EdgeInsets.fromLTRB(16, MediaQuery.of(context).padding.top + 16, 16, 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
@@ -95,63 +95,74 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ],
                 onChanged: (value) => setState(() => _selectedCharacter = value),
               ),
-            SizedBox(height: 12),
+            const SizedBox(height: 16),
             Text('Challenge Stats',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
-            SizedBox(height: 8),
-            SizedBox(
-              height: 180,
-              child: PieChart(
-                PieChartData(
-                  sections: [
-                    PieChartSectionData(
-                      value: wins.toDouble(),
-                      title: totalDuels == 0 ? '0%' : '${(wins / totalDuels * 100).toStringAsFixed(1)}%',
-                      color: Colors.green,
-                      radius: 50,
-                      titleStyle: TextStyle(color: Colors.white, fontSize: 12),
-                    ),
-                    PieChartSectionData(
-                      value: draws.toDouble(),
-                      title: totalDuels == 0 ? '0%' : '${(draws / totalDuels * 100).toStringAsFixed(1)}%',
-                      color: Colors.lightBlueAccent,
-                      radius: 50,
-                      titleStyle: TextStyle(color: Colors.white, fontSize: 12),
-                    ),
-                    PieChartSectionData(
-                      value: deaths.toDouble(),
-                      title: totalDuels == 0 ? '0%' : '${(deaths / totalDuels * 100).toStringAsFixed(1)}%',
-                      color: Colors.red[900],
-                      radius: 50,
-                      titleStyle: TextStyle(color: Colors.white, fontSize: 12),
-                    ),
-                  ],
-                  sectionsSpace: 2,
-                  centerSpaceRadius: 35,
-                ),
-              ),
-            ),
-            SizedBox(height: 8),
-            Text('$wins Victory / $draws Draw / $deaths Death',
-                style: TextStyle(fontSize: 14, color: Colors.white)),
-            SizedBox(height: 16),
-            Wrap(
-              spacing: 12,
-              runSpacing: 12,
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600, color: Colors.white)),
+            const SizedBox(height: 12),
+            Row(
               children: [
-                _buildStatCard('Focus Roll Results', '$focusWins / $focusLosses', 'Wins / Losses'),
-                _buildStatCard('Most Used Gambit', mostUsedGambit),
-                _buildStatCard('Most Effective Gambit', mostEffectiveGambit),
-                _buildStatCard('Most Victorious', mostVictoriousCharacter),
-                _buildStatCard('Rival', rival),
+                Expanded(
+                  child: SizedBox(
+                    height: 180,
+                    child: PieChart(
+                      PieChartData(
+                        sections: [
+                          PieChartSectionData(
+                            value: wins.toDouble(),
+                            title: totalDuels == 0 ? '0%' : '${(wins / totalDuels * 100).toStringAsFixed(1)}%',
+                            color: const Color.fromARGB(255, 63, 160, 67),
+                            radius: 50,
+                            titleStyle: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
+                          ),
+                          PieChartSectionData(
+                            value: draws.toDouble(),
+                            title: totalDuels == 0 ? '0%' : '${(draws / totalDuels * 100).toStringAsFixed(1)}%',
+                            color: const Color.fromARGB(255, 49, 168, 223),
+                            radius: 50,
+                            titleStyle: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
+                          ),
+                          PieChartSectionData(
+                            value: deaths.toDouble(),
+                            title: totalDuels == 0 ? '0%' : '${(deaths / totalDuels * 100).toStringAsFixed(1)}%',
+                            color: const Color.fromARGB(255, 136, 20, 20),
+                            radius: 50,
+                            titleStyle: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                        sectionsSpace: 2,
+                        centerSpaceRadius: 35,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildStatCard('Focus Roll Results', '$focusWins — $focusLosses', 'Wins — Losses'),
+                ),
               ],
             ),
-            SizedBox(height: 24),
-            Divider(color: Colors.grey),
+            const SizedBox(height: 12),
+            Text('$wins Victory / $draws Draw / $deaths Death',
+                style: TextStyle(fontSize: 16, color: Colors.white70)),
+            const SizedBox(height: 20),
+            Column(
+              children: [
+                const SizedBox(height: 16),
+                _buildTopListCard('Most Used Gambits', topUsedGambits),
+                _buildTopListCard('Most Effective Gambits', topEffectiveGambits),
+                _buildTopListCard('Most Victorious', topVictoriousChars),
+                _buildTopListCard('Top Rivals', topRivals),
+              ],
+            ),
+            const SizedBox(height: 24),
+            Divider(color: Colors.grey[700]),
+
+            // Donation section temporarily disabled for App Store compliance
+            
             Column(
               children: [
                 Text(
-                  '❤️ Please consider supporting Heresy Challenges',
+                  '❤️ Help keep Heresy Challenges free for all',
                   style: TextStyle(color: Colors.grey[400], fontSize: 12),
                 ),
                 SizedBox(height: 8),
@@ -166,7 +177,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     backgroundColor: const Color.fromARGB(255, 116, 27, 27),
                     padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                   ),
-                  child: Text('Donate via Linktree'),
+                  child: Text('Donate via Paypal'),
                 ),
               ],
             ),
@@ -182,29 +193,65 @@ class _DashboardScreenState extends State<DashboardScreen> {
     winningCharacters[duel.yourCharacter] = (winningCharacters[duel.yourCharacter] ?? 0) + 1;
   }
 
-  String getTopKey(Map<String, int> map) {
-    if (map.isEmpty) return 'N/A';
-    return map.entries.reduce((a, b) => a.value >= b.value ? a : b).key;
+  List<MapEntry<String, int>> getTopEntries(Map<String, int> map, [int count = 3]) {
+    final sorted = map.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
+    return sorted.take(count).toList();
   }
 
   Widget _buildStatCard(String title, String stat, [String? subtitle]) {
+    final isCenterAligned = title == 'Focus Roll Results';
     return SizedBox(
-      width: 160,
+      width: double.infinity,
       child: Card(
-        color: Colors.grey[850],
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        color: const Color.fromARGB(255, 20, 20, 30),
+        elevation: 4,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         child: Padding(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          child: Column(
+            crossAxisAlignment: isCenterAligned ? CrossAxisAlignment.center : CrossAxisAlignment.start,
+            children: [
+              Text(title.toUpperCase(),
+                  style: TextStyle(fontSize: 13, color: Colors.cyanAccent[100], letterSpacing: 0.8)),
+              const SizedBox(height: 8),
+              Text(stat,
+                  style: TextStyle(
+                      fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: 0.5)),
+              if (subtitle != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Text(subtitle,
+                      style: TextStyle(color: Colors.grey[400], fontSize: 12)),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTopListCard(String title, List<MapEntry<String, int>> topList) {
+    return SizedBox(
+      width: double.infinity,
+      child: Card(
+        color: const Color.fromARGB(255, 20, 20, 30),
+        elevation: 4,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title, style: TextStyle(fontSize: 14, color: Color.fromARGB(255, 122, 141, 228))),
-              SizedBox(height: 4),
-              Text(stat, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
-              if (subtitle != null)
+              Text(title.toUpperCase(),
+                  style: TextStyle(fontSize: 13, color: Colors.cyanAccent[100], letterSpacing: 0.8)),
+              const SizedBox(height: 8),
+              if (topList.isEmpty)
+                Text('N/A', style: TextStyle(color: Colors.grey[400], fontSize: 14)),
+              for (int i = 0; i < topList.length; i++)
                 Padding(
-                  padding: const EdgeInsets.only(top: 2),
-                  child: Text(subtitle, style: TextStyle(color: Colors.grey, fontSize: 12)),
+                  padding: const EdgeInsets.symmetric(vertical: 2),
+                  child: Text('${i + 1}: ${topList[i].key} — [${topList[i].value}]',
+                      style: TextStyle(color: Colors.white, fontSize: 16)),
                 ),
             ],
           ),
