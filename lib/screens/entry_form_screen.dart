@@ -52,6 +52,7 @@ class _EntryFormScreenState extends State<EntryFormScreen>
     'Howl of the Death Wolf',
     'I am Alpharius',
     'Legion of One',
+    'Liquifractor Onslaught',
     'Merciless Strike',
     'No Prey Escapes',
     'Nostroman Courage',
@@ -201,54 +202,92 @@ class _EntryFormScreenState extends State<EntryFormScreen>
     );
   }
 
-  Widget _buildGambitDropdown(String label, String value, Function(String?) onChanged) {
-  final controller = TextEditingController();
-
-  if (value.isNotEmpty) {
-    controller.text = value;
-  }
-
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Padding(
-        padding: const EdgeInsets.only(bottom: 4.0, left: 4),
-        child: Text(label, style: TextStyle(color: Colors.white70)),
-      ),
-      Autocomplete<String>(
+  Widget _buildCharacterAutocomplete({
+    required String label,
+    required TextEditingController controller,
+    required List<String> options,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: Autocomplete<String>(
         optionsBuilder: (TextEditingValue textEditingValue) {
-          return gambitOptions.where((g) =>
-              g.toLowerCase().contains(textEditingValue.text.toLowerCase()));
+          final query = textEditingValue.text.toLowerCase();
+          return options
+              .where((option) => option.toLowerCase().contains(query))
+              .toList();
         },
-        onSelected: (val) {
-          controller.text = val;
-          onChanged(val);
-        },
-        fieldViewBuilder: (context, textEditingController, focusNode, onFieldSubmitted) {
-          // Initialize text only once
-          if (controller.text.isNotEmpty && textEditingController.text.isEmpty) {
-            textEditingController.text = controller.text;
+        fieldViewBuilder: (context, textController, focusNode, onFieldSubmitted) {
+          if (controller.text.isNotEmpty && textController.text.isEmpty) {
+            textController.text = controller.text;
           }
 
           return TextFormField(
-            controller: textEditingController,
+            controller: textController,
             focusNode: focusNode,
             style: TextStyle(color: Colors.white),
             decoration: InputDecoration(
-              hintText: 'Type to Filter',
-              hintStyle: TextStyle(color: Colors.white54),
+              labelText: label,
               filled: true,
               fillColor: Colors.black26,
+              labelStyle: TextStyle(color: Colors.white70, fontSize: 14),
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
             ),
-            onChanged: (val) => onChanged(val),
+            onChanged: (val) => controller.text = val,
+            validator: (val) =>
+                val == null || val.trim().isEmpty ? 'Required' : null,
           );
         },
-      )
-    ],
-  );
-}
+        onSelected: (val) => controller.text = val,
+      ),
+    );
+  }
 
+  Widget _buildGambitDropdown(String label, String value, Function(String?) onChanged) {
+    final controller = TextEditingController();
+
+    if (value.isNotEmpty) {
+      controller.text = value;
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(bottom: 4.0, left: 4),
+          child: Text(label, style: TextStyle(color: Colors.white70)),
+        ),
+        Autocomplete<String>(
+          optionsBuilder: (TextEditingValue textEditingValue) {
+            return gambitOptions.where((g) =>
+                g.toLowerCase().contains(textEditingValue.text.toLowerCase()));
+          },
+          onSelected: (val) {
+            controller.text = val;
+            onChanged(val);
+          },
+          fieldViewBuilder: (context, textEditingController, focusNode, onFieldSubmitted) {
+            if (controller.text.isNotEmpty && textEditingController.text.isEmpty) {
+              textEditingController.text = controller.text;
+            }
+
+            return TextFormField(
+              controller: textEditingController,
+              focusNode: focusNode,
+              style: TextStyle(color: Colors.white),
+              decoration: InputDecoration(
+                hintText: 'Type to Filter',
+                hintStyle: TextStyle(color: Colors.white54),
+                filled: true,
+                fillColor: Colors.black26,
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+              onChanged: (val) => onChanged(val),
+            );
+          },
+        )
+      ],
+    );
+  }
 
   Widget _buildTextInput(String label, TextEditingController controller) {
     return Padding(
@@ -332,8 +371,16 @@ class _EntryFormScreenState extends State<EntryFormScreen>
             style: TextStyle(color: const Color.fromARGB(255, 102, 199, 255), fontSize: 20, fontWeight: FontWeight.w600)),
         SizedBox(height: 8),
         _buildTextInput('Name your Challenge', duel.titleController),
-        _buildTextInput('Your Character', duel.yourCharacterController),
-        _buildTextInput('Enemy Character', duel.enemyCharacterController),
+        _buildCharacterAutocomplete(
+          label: 'Your Character',
+          controller: duel.yourCharacterController,
+          options: yourCharBox.values.toList(),
+        ),
+        _buildCharacterAutocomplete(
+          label: 'Enemy Character',
+          controller: duel.enemyCharacterController,
+          options: enemyCharBox.values.toList(),
+        ),
         SizedBox(height: 8),
         for (int t = 0; t < duel.turns.length; t++)
           _buildTurnBlock(duel.turns[t], t, duel),
@@ -354,7 +401,7 @@ class _EntryFormScreenState extends State<EntryFormScreen>
       onTap: () => FocusScope.of(context).unfocus(),
       behavior: HitTestBehavior.translucent,
       child: Scaffold(
-        backgroundColor: Color(0xFF0A0F1F),
+        backgroundColor: Color.fromARGB(255, 5, 7, 15),
         body: Form(
           key: _formKey,
           child: SingleChildScrollView(

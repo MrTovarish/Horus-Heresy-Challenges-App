@@ -86,7 +86,7 @@ class MyApp extends StatelessWidget {
           ),
         ),
         appBarTheme: const AppBarTheme(
-          backgroundColor: Color(0xFF121B30),
+          backgroundColor: Color.fromARGB(255, 8, 8, 8),
           elevation: 0,
           titleTextStyle: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
         ),

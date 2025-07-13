@@ -24,65 +24,31 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
   late List<_EditableTurn> _turns;
   bool _isEditing = false;
 
+  late Box<String> yourCharBox;
+  late Box<String> enemyCharBox;
+
   final gambitOptions = [
-    'A Brother Betrayed',
-    'A Death Long Forseen',
-    'A Saga Woven Of Glory',
-    'A Wall Unyielding',
-    'Aegis of Wisdom',
-    'Angelic Descent',
-    'Archein of Wisdom',
-    'Barbaran Resilience',
-    'Beseech the Gods'
-    'Brutal Dismemberment',
-    'Bulwark of the Imperium',
-    'Calculating Swordsman',
-    'Death by a Thousand Cuts',
-    'Death\'s Champion',
-    'Decapitation Strike',
-    'Dirty Fighter',
-    'Duty is Sacrifice',
-    'Executioner\'s Tax',
-    'Feint and Riposte',
-    'Finishing Blow',
-    'Flurry of Blows',
-    'Grandstand',
-    'Guard Up',
-    'Hammerblow',
-    'Head-Taker',
-    'Howl of the Death Wolf',
-    'I am Alpharius',
-    'Legion of One',
-    'Merciless Strike',
-    'No Prey Escapes',
-    'Nostroman Courage',
-    'Paragon of Excellence',
-    'Prophetic Duelist',
-    'Seeker of Atonement',
-    'Seize the Iniative',
-    'Skill Unmatched',
-    'Spiteful Demise',
-    'Steadfast Resilience',
-    'Sword of the Order',
-    'Taunt and Bait',
-    'Tempered by War',
-    'Test the Foe',
-    'The Breaker',
-    'The Broken Mirror',
-    'The Line Unbroken',
-    'The Lion\'s Choler',
-    'The Path of the Warrior',
-    'The Shadowed Lord',
-    'The Undying Fire',
-    'Thrall of the Red Thirst',
-    'Violent Overkill',
-    'Witchblood',
-    'Withdraw'
+    'A Brother Betrayed', 'A Death Long Forseen', 'A Saga Woven Of Glory', 'A Wall Unyielding',
+    'Aegis of Wisdom', 'Angelic Descent', 'Archein of Wisdom', 'Barbaran Resilience',
+    'Beseech the Gods', 'Brutal Dismemberment', 'Bulwark of the Imperium', 'Calculating Swordsman',
+    'Death by a Thousand Cuts', 'Death\'s Champion', 'Decapitation Strike', 'Dirty Fighter',
+    'Duty is Sacrifice', 'Executioner\'s Tax', 'Feint and Riposte', 'Finishing Blow',
+    'Flurry of Blows', 'Grandstand', 'Guard Up', 'Hammerblow', 'Head-Taker',
+    'Howl of the Death Wolf', 'I am Alpharius', 'Legion of One', 'Liquifractor Onslaught','Merciless Strike',
+    'No Prey Escapes', 'Nostroman Courage', 'Paragon of Excellence', 'Prophetic Duelist',
+    'Seeker of Atonement', 'Seize the Iniative', 'Skill Unmatched', 'Spiteful Demise',
+    'Steadfast Resilience', 'Sword of the Order', 'Taunt and Bait', 'Tempered by War',
+    'Test the Foe', 'The Breaker', 'The Broken Mirror', 'The Line Unbroken',
+    'The Lion\'s Choler', 'The Path of the Warrior', 'The Shadowed Lord', 'The Undying Fire',
+    'Thrall of the Red Thirst', 'Violent Overkill', 'Witchblood', 'Withdraw'
   ];
 
   @override
   void initState() {
     super.initState();
+    yourCharBox = Hive.box<String>('your_characters');
+    enemyCharBox = Hive.box<String>('enemy_characters');
+
     _duel = widget.event.duels[widget.duelIndex];
     _titleController = TextEditingController(text: _duel.title);
     _yourCharacterController = TextEditingController(text: _duel.yourCharacter);
@@ -90,9 +56,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
     _turns = _duel.turns.map((t) => _EditableTurn.fromTurn(t)).toList();
   }
 
-  void _toggleEdit() {
-    setState(() => _isEditing = !_isEditing);
-  }
+  void _toggleEdit() => setState(() => _isEditing = !_isEditing);
 
   Future<void> _saveChanges() async {
     final updatedTurns = _turns.map((t) => Turn(
@@ -103,10 +67,20 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
       focusRollWin: t.focusRollWin,
     )).toList();
 
+    final yourChar = _yourCharacterController.text.trim();
+    final enemyChar = _enemyCharacterController.text.trim();
+
+    if (yourChar.isNotEmpty && !yourCharBox.values.contains(yourChar)) {
+      yourCharBox.add(yourChar);
+    }
+    if (enemyChar.isNotEmpty && !enemyCharBox.values.contains(enemyChar)) {
+      enemyCharBox.add(enemyChar);
+    }
+
     final updatedDuel = Duel(
       title: _titleController.text,
-      yourCharacter: _yourCharacterController.text,
-      enemyCharacter: _enemyCharacterController.text,
+      yourCharacter: yourChar,
+      enemyCharacter: enemyChar,
       turns: updatedTurns,
       result: _duel.result,
     );
@@ -143,8 +117,8 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
         child: ListView(
           children: [
             _editableField('Title', _titleController),
-            _editableField('Your Character', _yourCharacterController),
-            _editableField('Enemy Character', _enemyCharacterController),
+            _characterAutocompleteField('Your Character', _yourCharacterController, yourCharBox.values.toList()),
+            _characterAutocompleteField('Enemy Character', _enemyCharacterController, enemyCharBox.values.toList()),
             SizedBox(height: 20),
             ..._turns.asMap().entries.map((entry) {
               final turnIndex = entry.key;
@@ -230,6 +204,32 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
         : Text('$label: ${controller.text}', style: _infoStyle());
   }
 
+  Widget _characterAutocompleteField(String label, TextEditingController controller, List<String> options) {
+    return _isEditing
+        ? Autocomplete<String>(
+            optionsBuilder: (TextEditingValue textEditingValue) {
+              return options
+                  .where((option) => option.toLowerCase().contains(textEditingValue.text.toLowerCase()))
+                  .toList();
+            },
+            fieldViewBuilder: (context, textController, focusNode, onFieldSubmitted) {
+              if (controller.text.isNotEmpty && textController.text.isEmpty) {
+                textController.text = controller.text;
+              }
+
+              return TextFormField(
+                controller: textController,
+                focusNode: focusNode,
+                decoration: InputDecoration(labelText: label),
+                style: _infoStyle(),
+                onChanged: (val) => controller.text = val,
+              );
+            },
+            onSelected: (val) => controller.text = val,
+          )
+        : Text('$label: ${controller.text}', style: _infoStyle());
+  }
+
   Widget _gambitDropdown(String selected, ValueChanged<String> onChanged, String label) {
     return DropdownSearch<String>(
       selectedItem: selected,
@@ -297,6 +297,7 @@ class _EditableTurn {
     );
   }
 }
+
 
 
 
